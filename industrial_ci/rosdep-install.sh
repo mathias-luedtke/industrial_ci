@@ -1,4 +1,5 @@
 #!/bin/bash -ex
+# Use -ex to exit this script upon errors. See https://github.com/ros-industrial/industrial_ci/pull/88
 
 # Software License Agreement (BSD License)
 #

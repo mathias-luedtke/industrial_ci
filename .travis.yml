@@ -43,6 +43,7 @@ env:
     - ROS_DISTRO=kinetic AFTER_SCRIPT='catkin --version'
     - ROS_DISTRO=kinetic NOT_TEST_BUILD='true' DEBUG_BASH='true' VERBOSE_OUTPUT='false'
     - ROS_DISTRO=lunar ROS_REPOSITORY_PATH=http://packages.ros.org/ros-shadow-fixed/ubuntu
+    - ROS_DISTRO=lunar USE_MOCKUP='industrial_ci/mockups/industrial_ci_testpkg'
 matrix:
   allow_failures:
     - env: ROS_DISTRO=indigo NOT_TEST_BUILD='true' NOT_TEST_INSTALL='true' POST_PROCESS='I_am_supposed_to_fail'

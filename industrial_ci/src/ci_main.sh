@@ -36,7 +36,7 @@ trap ici_exit EXIT # install industrial_ci exit handler
 if [ "$PRERELEASE" == true ]; then
   source ${ICI_SRC_PATH}/tests/ros_prerelease.sh
   run_ros_prerelease
-elif [ -n "$ABICHECK" ]; then
+elif [ "$ABICHECK" == true ]; then
   source ${ICI_SRC_PATH}/tests/abi_check.sh
   run_abi_check
 else

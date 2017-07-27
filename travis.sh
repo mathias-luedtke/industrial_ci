@@ -22,9 +22,11 @@
 DIR_THIS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 if [ "$ABICHECK" == true ] && [ -z "$ABICHECK_URL" ]; then
-    base_branch=${TRAVIS_PULL_REQUEST_BRANCH+$TRAVIS_BRANCH}
-    FALLBACK_BRANCH=${FALLBACK_BRANCH:-$TRAVIS_BRANCH}
-    export ABICHECK_URL="https://github.com/${FALLBACK_REPO:-$TRAVIS_REPO_SLUG}/archive/${base_branch:-$FALLBACK_BRANCH}.tar.gz"
+    base_branch="$TRAVIS_BRANCH"
+    if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ -n  "$FALLBACK_BRANCH" ]; then
+        base_branch="$FALLBACK_BRANCH"
+    fi
+    export ABICHECK_URL="https://github.com/${FALLBACK_REPO:-$TRAVIS_REPO_SLUG}/archive/$base_branch.tar.gz"
     echo "Testing against $ABICHECK_URL"
 fi
 

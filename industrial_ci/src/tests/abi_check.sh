@@ -21,7 +21,7 @@ fi
 
 function install_abi_tracker() {
     sudo apt-get update -qq
-    sudo apt-get install -y -qq libelf-dev wdiff rfcdiff elfutils autoconf pkg-config links
+    sudo apt-get install -y -qq libelf-dev wdiff rfcdiff elfutils autoconf pkg-config links unzip
 
     wget -q -O - https://raw.githubusercontent.com/lvc/installer/master/installer.pl | perl - -install -prefix /usr abi-tracker
 
@@ -60,7 +60,7 @@ function run_abi_check() {
     cat <<EOF > /abicheck/repo.json
 {
 "Name":           "$TARGET_REPO_NAME",
-"PreInstall":     "catkin_init_workspace && rosdep install -q --from-paths . --ignore-src -y"
+"PreInstall":     "catkin_init_workspace; rosdep install -q --from-paths . --ignore-src -y"
 }
 EOF
 

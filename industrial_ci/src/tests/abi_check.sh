@@ -15,24 +15,63 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if [ -z "$ABICHECK_URL" ]; then
-    error 'please specify ABICHECK_URL'
-fi
-
 function install_abi_tracker() {
     sudo apt-get update -qq
-    sudo apt-get install -y -qq libelf-dev wdiff rfcdiff elfutils autoconf pkg-config links unzip
+    sudo apt-get install -y -qq libelf-dev wdiff elfutils autoconf pkg-config links bsdtar wget sudo
 
-    wget -q -O - https://raw.githubusercontent.com/lvc/installer/master/installer.pl | perl - -install -prefix /usr abi-tracker
+    wget -q -O - https://raw.githubusercontent.com/lvc/installer/master/installer.pl | sudo perl - -install -prefix /usr abi-tracker
 
     git clone https://github.com/universal-ctags/ctags.git /tmp/ctags
-    (cd /tmp/ctags && ./autogen.sh && ./configure && make install)
+    (cd /tmp/ctags && ./autogen.sh && ./configure && sudo make install)
 
     mkdir -p "/abicheck/db/$TARGET_REPO_NAME/" "/abicheck/src/$TARGET_REPO_NAME"/{current,0.0.0}
     cp -a "$TARGET_REPO_PATH" "/abicheck/src/$TARGET_REPO_NAME/current/src"
 }
 
+
+function abi_prepare_src() {
+    local target_dir=$1
+    local url=$2
+
+    mkdir -p "$target_dir"
+
+    if [ -d "$url" ]; then
+        cp -a "$url" "$target_dir"
+    else
+        set -o pipefail
+        wget -q -O - "$url" | bsdtar -C "$target_dir" -xf-
+        set +o pipefail
+    fi
+}
+
+function abi_build_workspace() {
+    local base=$1
+    local version=$2
+    local workspace="$base/$version"
+    local url=$3
+
+    local cflags="-g -Og"
+
+    abi_prepare_src "$workspace/src" "$url"
+
+    rosdep install -q --from-paths "$workspace/src" --ignore-src -y
+
+    catkin config --init --install -w "$workspace" --extend "/opt/ros/$ROS_DISTRO" --cmake-args -DCMAKE_C_FLAGS="$cflags" -DCMAKE_CXX_FLAGS="$cflags"
+    catkin build -w "$workspace"
+
+    mkdir "$workspace/abi_dumps"
+    for l in "$workspace/install/lib"/*.so; do
+        abi-dumper "$l" -o "$workspace/abi_dumps/$(basename $l ".so").dump" -lver "$version" -public-headers "$workspace/install/include"
+    done
+}
+
 function run_abi_check() {
+    if [ -z "$ABICHECK_URL" ]; then
+        error 'please specify ABICHECK_URL'
+    fi
+
+    local target_ext=$(grep -Pio '\.(zip|tar\.\w+|tgz|tbz2)\Z' <<< "$ABICHECK_URL")
+    local target_version=$(basename "$ABICHECK_URL" "$target_ext")
     ici_require_run_in_docker # this script must be run in docker
 
     ici_time_start install_abi_tracker
@@ -48,48 +87,41 @@ function run_abi_check() {
     fi
     ret_rosdep=1
     rosdep update || while [ $ret_rosdep != 0 ]; do sleep 1; rosdep update && ret_rosdep=0 || echo "rosdep update failed"; done
-
+    rosdep install -q --from-paths "$TARGET_REPO_PATH" --ignore-src -y > /dev/null
     ici_time_end  # setup_rosdep
 
-    ici_time_start abi_check
+    ici_time_start abi_build_new
+    abi_build_workspace /abicheck new "$TARGET_REPO_PATH"
+    ici_time_end  # abi_build_new
 
-    local target_ext
-    target_ext=$(grep -Pio '\.(zip|tar\.\w+|tgz|tbz2)\Z' <<< "$ABICHECK_URL")
-    local target_file="src/$TARGET_REPO_NAME/0.0.0/$TARGET_REPO_NAME-0.0.0$target_ext"
+    ici_time_start abi_build_old
+    abi_build_workspace /abicheck/old $target_version "$ABICHECK_URL"
+    ici_time_end  # abi_build_old
 
-    cat <<EOF > /abicheck/repo.json
-{
-"Name":           "$TARGET_REPO_NAME",
-"PreInstall":     "catkin_init_workspace; rosdep install -q --from-paths . --ignore-src -y"
-}
-EOF
+    local reports_dir="/abicheck/reports/$target_version"
+    mkdir -p "$reports_dir"
 
-    cat <<EOF > /abicheck/db/$TARGET_REPO_NAME/Monitor.json
-\$VAR1 = {
-        'Source' => {
+    local broken=()
+    for n in /abicheck/new/abi_dumps/*.dump; do
+        local l=$(basename "$n" ".dump")
+        local o="/abicheck/old/$target_version/abi_dumps/$l.dump"
+        if [ -f "$o" ]; then
+            ici_time_start "abi_check_$l"
+            local ret=0
+            abi-compliance-checker -report-path "$reports_dir/$l.html" -l "$l" -n "$n" -o "$o" || ret=$?
+            if [ "$ret" -eq "0" ]; then
+                ici_time_end # abi_check_*
+            elif [ "$ret" -eq "1" ]; then
+                links -dump "$reports_dir/$l.html"
+                broken+=("$l")
+                ici_time_end 33 "$ret" # abi_check_*, yellow
+            else
+                ici_exit "$ret"
+            fi
+        fi
+    done
 
-                        '0.0.0' => '$target_file',
-                        'current' => 'src/$TARGET_REPO_NAME/current'
-                    }
-        };
-EOF
-
-    wget -q -O "/abicheck/$target_file" "$ABICHECK_URL"
-
-    source "/opt/ros/$ROS_DISTRO/setup.bash"
-    if ! (cd /abicheck && abi-monitor -build repo.json && abi-tracker -build -t abireport repo.json); then
-        ret=$?
-        for l in "/abicheck/build_logs/$TARGET_REPO_NAME"/*/*; do
-            echo "Log $l:"
-            cat "$l"
-        done
-        ici_exit $ret
+    if [ "${#broken[@]}" -gt "0" ]; then
+        error "Broken libraries: ${broken[*]}"
     fi
-    ici_time_end  # abi_check
-
-    echo
-    echo "ABI compliance with $(basename "$ABICHECK_URL" "$target_ext")"
-    echo
-    links -dump "/abicheck/objects_report/$TARGET_REPO_NAME/0.0.0/current/report.html"
-    grep -q '"BC": "100"' "/abicheck/objects_report/$TARGET_REPO_NAME/0.0.0/current/meta.json"
 }

@@ -10,6 +10,7 @@ services:
 language: generic
 env:
   matrix:
-    - ROS_DISTRO=kinetic _EXTERNAL_REPO='ros/actionlib#indigo-devel' ROS_REPO=ros ABICHECK=true ABICHECK_URL=https://github.com/ros/actionlib/archive/hydro-devel.zip
+    - ROS_DISTRO=indigo _EXTERNAL_REPO='ros/actionlib#indigo-devel' ROS_REPO=ros ABICHECK=true ABICHECK_URL=https://github.com/ros/actionlib/archive/1.11.1.tar.gz
+    - ROS_DISTRO=kinetic _EXTERNAL_REPO='ros-industrial/ros_canopen#0.7.5' ROS_REPO=ros ABICHECK=true ABICHECK_URL=https://github.com/ros-industrial/ros_canopen/archive/0.7.1.tar.gz EXPECT_EXIT_CODE=1
 script:
   - industrial_ci/_wrap_test.sh # this script is only for internal use

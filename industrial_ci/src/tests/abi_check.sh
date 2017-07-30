@@ -23,9 +23,6 @@ function install_abi_tracker() {
 
     git clone https://github.com/universal-ctags/ctags.git /tmp/ctags
     (cd /tmp/ctags && ./autogen.sh && ./configure && sudo make install)
-
-    mkdir -p "/abicheck/db/$TARGET_REPO_NAME/" "/abicheck/src/$TARGET_REPO_NAME"/{current,0.0.0}
-    cp -a "$TARGET_REPO_PATH" "/abicheck/src/$TARGET_REPO_NAME/current/src"
 }
 
 
@@ -35,8 +32,9 @@ function abi_prepare_src() {
 
     mkdir -p "$target_dir"
 
-    if [ -d "$url" ]; then
-        cp -a "$url" "$target_dir"
+    if [[ "$url" =~ ^#(.*)$ ]]; then
+        cp -a "$TARGET_REPO_PATH" "$target_dir"
+        (cd "$target_dir/$(basename "$TARGET_REPO_PATH")" && git checkout "${BASH_REMATCH[1]}")
     else
         set -o pipefail
         wget -q -O - "$url" | bsdtar -C "$target_dir" -xf-
@@ -48,11 +46,8 @@ function abi_build_workspace() {
     local base=$1
     local version=$2
     local workspace="$base/$version"
-    local url=$3
 
     local cflags="-g -Og"
-
-    abi_prepare_src "$workspace/src" "$url"
 
     rosdep install -q --from-paths "$workspace/src" --ignore-src -y
 
@@ -61,25 +56,11 @@ function abi_build_workspace() {
 
     mkdir "$workspace/abi_dumps"
     for l in "$workspace/install/lib"/*.so; do
-        abi-dumper "$l" -o "$workspace/abi_dumps/$(basename $l ".so").dump" -lver "$version" -public-headers "$workspace/install/include"
+        abi-dumper "$l" -o "$workspace/abi_dumps/$(basename "$l" .so).dump" -lver "$version" -public-headers "$workspace/install/include"
     done
 }
 
-function run_abi_check() {
-    if [ -z "$ABICHECK_URL" ]; then
-        error 'please specify ABICHECK_URL'
-    fi
-
-    local target_ext=$(grep -Pio '\.(zip|tar\.\w+|tgz|tbz2)\Z' <<< "$ABICHECK_URL")
-    local target_version=$(basename "$ABICHECK_URL" "$target_ext")
-    ici_require_run_in_docker # this script must be run in docker
-
-    ici_time_start install_abi_tracker
-    install_abi_tracker > /dev/null
-    ici_time_end  # install_abi_tracker
-
-    ici_time_start setup_rosdep
-
+function abi_setup_rosdep() {
     # Setup rosdep
     rosdep --version
     if ! [ -d /etc/ros/rosdep/sources.list.d ]; then
@@ -88,14 +69,46 @@ function run_abi_check() {
     ret_rosdep=1
     rosdep update || while [ $ret_rosdep != 0 ]; do sleep 1; rosdep update && ret_rosdep=0 || echo "rosdep update failed"; done
     rosdep install -q --from-paths "$TARGET_REPO_PATH" --ignore-src -y > /dev/null
+}
+
+function run_abi_check() {
+    local target_ext
+    local target_version
+    local ref_list
+
+    if ! ref_list=($(cd "$TARGET_REPO_PATH" && git rev-list --parents -n 1 HEAD)); then
+        if [ -z "$ABICHECK_URL" ]; then
+           error "Could not find commit parents, please set ABICHECK_URL"
+        fi
+    elif [ "${#ref_list[@]}" -gt 2 ] || [ -z "$ABICHECK_URL" ]; then
+        export ABICHECK_URL="#${ref_list[1]}"
+        target_version="${ref_list[1]}"
+    fi
+
+    if [ -z "$target_version" ]; then
+        target_ext=$(grep -Pio '\.(zip|tar\.\w+|tgz|tbz2)\Z' <<< "${ABICHECK_URL%%\?*}")
+        target_version=$(basename "$ABICHECK_URL" "$target_ext")
+    fi
+
+    ici_require_run_in_docker # this script must be run in docker
+
+    ici_time_start install_abi_tracker
+    install_abi_tracker > /dev/null
+    ici_time_end  # install_abi_tracker
+
+    ici_time_start setup_rosdep
+    abi_setup_rosdep
     ici_time_end  # setup_rosdep
 
     ici_time_start abi_build_new
-    abi_build_workspace /abicheck new "$TARGET_REPO_PATH"
+    mkdir -p "/abicheck/new/src"
+    ln -s "$TARGET_REPO_PATH" "/abicheck/new/src"
+    abi_build_workspace /abicheck new
     ici_time_end  # abi_build_new
 
     ici_time_start abi_build_old
-    abi_build_workspace /abicheck/old $target_version "$ABICHECK_URL"
+    abi_prepare_src "/abicheck/old/$target_version/src" "$ABICHECK_URL"
+    abi_build_workspace /abicheck/old "$target_version"
     ici_time_end  # abi_build_old
 
     local reports_dir="/abicheck/reports/$target_version"

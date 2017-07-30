@@ -21,15 +21,6 @@
 # 2016/05/18 http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 DIR_THIS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [ "$ABICHECK" == true ] && [ -z "$ABICHECK_URL" ]; then
-    base_branch="$TRAVIS_BRANCH"
-    if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ -n  "$FALLBACK_BRANCH" ]; then
-        base_branch="$FALLBACK_BRANCH"
-    fi
-    export ABICHECK_URL="https://github.com/${FALLBACK_REPO:-$TRAVIS_REPO_SLUG}/archive/$base_branch.tar.gz"
-    echo "Testing against $ABICHECK_URL"
-fi
-
 export TARGET_REPO_PATH=$TRAVIS_BUILD_DIR
 export TARGET_REPO_NAME=${TRAVIS_REPO_SLUG##*/}
 

@@ -32,6 +32,7 @@ Terminology
 
 * **client repository**: The repositories that use the configuration stored in this repo to run CI jobs.
 * **downstream packages**: The software packages that depend on the package that's targetted to be tested using industrial_ci.
+* **merge parent**: The branch that your pull/merge request is opened against.
 
 FAQ
 ======
@@ -150,10 +151,10 @@ Optional environment variables
 
 Note that some of these currently tied only to a single option, but we still leave them for the future when more options become available (e.g. ament with BUILDER).
 
-* `ABICHECK` (default: false): If `true`, run a binary compatibility check with `ABICC <https://github.com/lvc/abi-compliance-checker>`_ and exit (see `below <#abi-checks>`_ for details).
-* `ABICHECK_FALLBACK` (default: not set): URL of archive to be used if no merge parent could be detected,
-* `ABICHECK_URL` (default: not set): URL of archive to check against. If empty, merge parent is used or `ABICHECK_FALLBACK` for regular commits.
-* `ABICHECK_VERSION` (default: not set): Readble version name. It will be read from the URL if possible.
+* `ABICHECK` (default: false): If `true`, run a binary compatibility check with `ABICC <https://github.com/lvc/abi-compliance-checker>`_ against either an archive specified by `ABICHECK_URL`, or the targeted branch in the pull/merge request (see `below <#abi-checks>`_ for details).
+* `ABICHECK_MERGE` (default: true): Used only when `ABICHECK` is true. If `true`, merge parent (see `Terminology section <#terminology>`_) will be checked against.
+* `ABICHECK_URL` (default: not set): Used only when `ABICHECK` is true **AND** `ABICHECK_MERGE` is `false`. URL of http-downloadable archive to check against. If empty, a) merge parent will be used for pull/merge request, b) the tarball specified in `ABICHECK_FALLBACK` will be used for push commit. The url should point to an archive (\*.tar.\*,\*.zip, \*.tgz or \*.tbz2).
+* `ABICHECK_VERSION` (default: not set): Used only when `ABICHECK` is true **AND** `ABICHECK_URL` is not empty. Version name of the set of code, which the location is specified in `ABICHECK_URL` of. The version will be automatically read from the URL passed in `ABICHECK_URL` if possible, but for a URL that doesn't point to a version-based file name (e.g. the link for a tagged version on Gitlab doesn't. See more in `example section <#example-abi-checking>`_).
 * `ADDITIONAL_DEBS` (default: not set): More DEBs to be used. List the name of DEB(s delimitted by whitespace if multiple DEBs specified). Needs to be full-qualified Ubuntu package name. E.g.: "ros-indigo-roslint ros-indigo-gazebo-ros" (without quotation).
 * `AFTER_SCRIPT`: (default: not set): Used to specify shell commands that run after all source tests. NOTE: `Unlike Travis CI <https://docs.travis-ci.com/user/customizing-the-build#Breaking-the-Build>`_ where `after_script` doesn't affect the build result, the result in the commands specified with this DOES affect the build result.
 * `BEFORE_SCRIPT`: (default: not set): Used to specify shell commands that run before building packages.
@@ -261,17 +262,52 @@ Then open a pull request using this branch against the branch that the change is
 ABI checks
 ----------
 
-The `ABI <https://en.wikipedia.org/wiki/Application_binary_interface>`_ of a library might break for various reasons. A detailed explanation and a list of DOs and DON'Ts can be found in the `KDE Community Wiki <https://community.kde.org/Policies/Binary_Compatibility_Issues_With_C%2B%2B>`_.
+Generally speaking, the `ABI <https://en.wikipedia.org/wiki/Application_binary_interface>`_ of a library might break for various reasons. A detailed explanation and a list of DOs and DON'Ts can be found in the `KDE Community Wiki <https://community.kde.org/Policies/Binary_Compatibility_Issues_With_C%2B%2B>`_.
 
-The ABI checks can be used in two ways:
+The ABI checks with `industrial_ci` can be enabled by the following steps:
 
-1. Fixed URL in `ABICHECK_URL`: The current version will get tested against the code archive in the URL.
-2. Merge mode: If the current commit is a merge, then the code gets tested against the merge parent. Otherwise `ABICHECK_FALLBACK` is used.
-So either `ABICHECK_URL` or `ABICHECK_FALLBACK` must be set.
+1. Set `ABICHECK='true'`. If you're checking your pull/merge request, this is the only change needed so stop here.
+2. If you want to run the ABI check against a specific set of code (e.g. tagged version or older tagged versions of your package) other than your merge parent, then you can specify that by passing the full URL of the tarball in `ABICHECK_URL` variable. The following is a few examples of those URL::
 
-The url should point to an archive (\*.tar.\*,\*.zip, \*.tgz or \*.tbz2). The file's basename will be displayed as version.
-As an alternative `ABICHECK_VERSION` can be provided explicitly.
+  2.a. https://github.com/ros-planning/moveit/releases/tag/0.9.9
 
+  2.b. https://gitlab.com/YOUR_ORGANIZATION/YOUR_REPO/repository/ver_0.0.8/archive.zip
+
+3. In the case `b` above where the tar/zipball file name doesn't include any version info (URL does though), you need to specify the version by `ABICHECK_VERSION` variable.
+
+Example ABI checking configuration
+++++++++++++++++++++++++++++++++++
+
+Let's look at an example config in `.travis.yml (from industrial_ci repository) <https://github.com/ros-industrial/industrial_ci/blob/master/.travis.yml>`_ (these are just sets of environment variables, so configs should look very similar or even the same on other CI platforms (e.g. Gitlab CI)).::
+
+  Simplest case; Check ABI compatibility between the merge parent.
+
+    - ROS_DISTRO=indigo
+      ABICHECK=true
+
+  Check ABI compatibility with the specific version, pointing to the versioned tarball.
+  
+    - ROS_DISTRO=kinetic
+      ABICHECK=true
+      ABICHECK_MERGE=false
+      ABICHECK_URL=https://github.com/ros-industrial/ros_canopen/archive/0.7.5.tar.gz
+
+ABI check usecase patterns detail
++++++++++++++++++++++++++++++++++
+
+ABI check can be run for checking both pull/merge requests, and your branch w/o p/m request. Depending on what you are testing, configuration can vary:
+
+- No PR
+
+  - `ABICHECK_MERGE` empty: `ABICHECK_URL` gets used
+  - `ABICHECK_MERGE` false: `ABICHECK_URL` gets used
+  - `ABICHECK_MERGE` true: merge commit gets tested, fails if no merge (not recommended)
+- With P/M Request
+
+  - `ABICHECK_MERGE` empty: `ABICHECK_MERGE` will be set to true, merge will get tested (auto-detection works for travis only)
+  - `ABICHECK_MERGE` false: `ABICHECK_URL` gets used
+  - `ABICHECK_MERGE` true: merge will get tested
+      
 (Optional) Customize `catkin config`
 ------------------------------------
 

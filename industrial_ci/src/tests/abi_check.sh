@@ -77,16 +77,16 @@ function run_abi_check() {
     export ABICHECK_VERSION
     export ABICHECK_URL
 
-    if [ -z "$ABICHECK_URL" ]; then
-        local ref_list
-        if ref_list=($(cd "$TARGET_REPO_PATH" && git rev-list --parents -n 1 HEAD)) && [ "${#ref_list[@]}" -gt 2 ]; then
-            ABICHECK_URL="#${ref_list[1]}"
-            ABICHECK_VERSION="${ref_list[1]}"
-        elif [ -z "$ABICHECK_FALLBACK" ]; then
-            error "Could not find commit parents, please set ABICHECK_FALLBACK"
-        else
-            ABICHECK_URL="$ABICHECK_FALLBACK"
-        fi
+    if [ "$ABICHECK_MERGE" = true ]; then
+      local ref_list
+      if ref_list=($(cd "$TARGET_REPO_PATH" && git rev-list --parents -n 1 HEAD)) && [ "${#ref_list[@]}" -gt 2 ]; then
+          ABICHECK_URL="#${ref_list[1]}"
+          ABICHECK_VERSION="${ref_list[1]}"
+      else
+          error "Could not find merge commit for ABI check"
+      fi
+    elif [ -z "$ABICHECK_URL" ]; then
+        error "Please set ABICHECK_URL"
     fi
 
     if [ -z "$ABICHECK_VERSION" ]; then

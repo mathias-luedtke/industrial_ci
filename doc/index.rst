@@ -270,6 +270,7 @@ The ABI checks with `industrial_ci` can be enabled by the following steps:
 2. If you want to run the ABI check against a specific set of code (e.g. tagged version or older tagged versions of your package) other than your merge parent, then you can specify that by passing the full URL of the tarball in `ABICHECK_URL` variable. The following is a few examples of those URL::
 
   2.a. https://github.com/ros-planning/moveit/releases/tag/0.9.9
+
   2.b. https://gitlab.com/YOUR_ORGANIZATION/YOUR_REPO/repository/ver_0.0.8/archive.zip
 
 3. In the case `b` above where the tar/zipball file name doesn't include any version info (URL does though), you need to specify the version by `ABICHECK_VERSION` variable.
@@ -291,6 +292,22 @@ Let's look at an example config in `.travis.yml (from industrial_ci repository) 
       ABICHECK_MERGE=false
       ABICHECK_URL=https://github.com/ros-industrial/ros_canopen/archive/0.7.5.tar.gz
 
+ABI check usecase patterns detail
++++++++++++++++++++++++++++++++++
+
+ABI check can be run for checking both pull/merge requests, and your branch w/o p/m request. Depending on what you are testing, configuration can vary:
+
+- No PR
+
+  - `ABICHECK_MERGE` empty: `ABICHECK_URL` gets used
+  - `ABICHECK_MERGE` false: `ABICHECK_URL` gets used
+  - `ABICHECK_MERGE` true: merge commit gets tested, fails if no merge (not recommended)
+- With P/M Request
+
+  - `ABICHECK_MERGE` empty: `ABICHECK_MERGE` will be set to true, merge will get tested (auto-detection works for travis only)
+  - `ABICHECK_MERGE` false: `ABICHECK_URL` gets used
+  - `ABICHECK_MERGE` true: merge will get tested
+      
 (Optional) Customize `catkin config`
 ------------------------------------
 

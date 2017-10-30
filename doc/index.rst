@@ -265,24 +265,26 @@ Generally speaking, the `ABI <https://en.wikipedia.org/wiki/Application_binary_i
 
 The ABI checks with `industrial_ci` can be enabled by setting 'ABICHECK_URL' to the stable version (i.e. you want to check against with this for sure) of your code. Two types of value can be passed to `ABICHECK_URL`:
 
-  - Branch.
-    - Simplest thus recommended. Branch needs to be stable.
-    - URL must be pointing to an archive, not the branch itself. See the examples below.
-      - On GitHub, URL for a branch's archive can be https://github.com/%ORG%/%REPO%/archive/%BRANCH%.zip
-  - Tagged version.
+- Branch.
+
+  - Simplest thus recommended. Branch needs to be stable.
+  - URL must be pointing to an archive, not the branch itself. See the examples below.
+
+    - On GitHub, URL for a branch's archive can be https://github.com/%ORG%/%REPO%/archive/%BRANCH%.zip
+- Tagged version.
 
 The following is a few examples of those URL:
 
-  - https://github.com/ros-industrial/ros_canopen/archive/kinetic.zip    (branch)
-  - https://github.com/ros-industrial-release/ros_canopen-release/archive/upstream.zip
-  - https://gitlab.com/ipa-mdl/ci-example/repository/master/archive.zip
-  - https://github.com/ros-planning/moveit/archive/0.9.9.tar.gz          (tagged version)
+- https://github.com/ros-industrial/ros_canopen/archive/kinetic.zip    (branch)
+- https://github.com/ros-industrial-release/ros_canopen-release/archive/upstream.zip
+- https://gitlab.com/ipa-mdl/ci-example/repository/master/archive.zip
+- https://github.com/ros-planning/moveit/archive/0.9.9.tar.gz          (tagged version)
 
 As an alternative the URL can be specified in shortcut form `provider:organization/repository#version`, which is supported for bitbucket, github and gitlab:
 
-  - github:ros-industrial-release/ros_canopen-release#upstream           (branch)
-  - gitlab:ipa-mdl/ci-example#master
-  - github:ros-planning/moveit#0.9.9                                     (tagged version)
+- github:ros-industrial-release/ros_canopen-release#upstream           (branch)
+- gitlab:ipa-mdl/ci-example#master
+- github:ros-planning/moveit#0.9.9                                     (tagged version)
 
 
 ABI check examples:

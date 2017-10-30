@@ -152,7 +152,7 @@ Optional environment variables
 Note that some of these currently tied only to a single option, but we still leave them for the future when more options become available (e.g. ament with BUILDER).
 
 * `ABICHECK_MERGE` (default: not set): Used only when `ABICHECK_URL` is set. For travis it can be set to 'auto' to auto-detect pull requests. If set to 'true' the merge parent (see `Terminology section <#terminology>`_) will be checked against.
-* `ABICHECK_URL` (default: not set): Run binary compatibility check with `ABICC <https://github.com/lvc/abi-compliance-checker>`_. The URL should point to a baseline archive (\*.tar.\*,\*.zip, \*.tgz or \*.tbz2), see more in `the ABI checks section <#abi-checks>`_)
+* `ABICHECK_URL` (default: not set): Run binary compatibility check with `ABICC <https://github.com/lvc/abi-compliance-checker>`_. The URL should point to a baseline of either a branch or an archive (\*.tar.\*,\*.zip, \*.tgz or \*.tbz2). See more in `the ABI checks section <#abi-checks>`_)
 * `ABICHECK_VERSION` (default: not set): Used only when `ABICHECK_URL` is set. Version name (for display only) of the set of code, which the location is specified in `ABICHECK_URL` of. The version will be automatically read from the URL passed in `ABICHECK_URL` if possible, but for a URL that doesn't point to a version-based file name (e.g. the link for a tagged version on Gitlab doesn't).
 * `ADDITIONAL_DEBS` (default: not set): More DEBs to be used. List the name of DEB(s delimitted by whitespace if multiple DEBs specified). Needs to be full-qualified Ubuntu package name. E.g.: "ros-indigo-roslint ros-indigo-gazebo-ros" (without quotation).
 * `AFTER_SCRIPT`: (default: not set): Used to specify shell commands that run after all source tests. NOTE: `Unlike Travis CI <https://docs.travis-ci.com/user/customizing-the-build#Breaking-the-Build>`_ where `after_script` doesn't affect the build result, the result in the commands specified with this DOES affect the build result.
@@ -263,24 +263,32 @@ ABI checks
 
 Generally speaking, the `ABI <https://en.wikipedia.org/wiki/Application_binary_interface>`_ of a library might break for various reasons. A detailed explanation and a list of DOs and DON'Ts can be found in the `KDE Community Wiki <https://community.kde.org/Policies/Binary_Compatibility_Issues_With_C%2B%2B>`_.
 
-The ABI checks with `industrial_ci` can be enabled by setting 'ABICHECK_URL' to a code archive with your stable version (e.g. tagged version or older tagged versions of your package)
+The ABI checks with `industrial_ci` can be enabled by setting 'ABICHECK_URL' to the stable version (i.e. you want to check against with this for sure) of your code. Two types of value can be passed to `ABICHECK_URL`:
+
+  - Branch.
+    - Simplest thus recommended. Branch needs to be stable.
+    - URL must be pointing to an archive, not the branch itself. See the examples below.
+      - On GitHub, URL for a branch's archive can be https://github.com/%ORG%/%REPO%/archive/%BRANCH%.zip
+  - Tagged version.
+
 The following is a few examples of those URL:
 
-  - https://github.com/ros-planning/moveit/archive/0.9.9.tar.gz
+  - https://github.com/ros-industrial/ros_canopen/archive/kinetic.zip    (branch)
   - https://github.com/ros-industrial-release/ros_canopen-release/archive/upstream.zip
   - https://gitlab.com/ipa-mdl/ci-example/repository/master/archive.zip
+  - https://github.com/ros-planning/moveit/archive/0.9.9.tar.gz          (tagged version)
 
 As an alternative the URL can be specified in shortcut form `provider:organization/repository#version`, which is supported for bitbucket, github and gitlab:
 
-  - github:ros-planning/moveit#0.9.9
-  - github:ros-industrial-release/ros_canopen-release#upstream
+  - github:ros-industrial-release/ros_canopen-release#upstream           (branch)
   - gitlab:ipa-mdl/ci-example#master
+  - github:ros-planning/moveit#0.9.9                                     (tagged version)
 
 
 ABI check examples:
 +++++++++++++++++++
 
-Check against a specific stable version (e.g. stable `kinetic` branch) for push and PR tests:
+Simplest example: Check against a specific stable branch (e.g. `kinetic` branch) for push and PR tests:
 ::
   - ROS_DISTRO=kinetic
     ABICHECK_URL='github:ros-industrial/ros_canopen#kinetic'

@@ -261,36 +261,14 @@ Then open a pull request using this branch against the branch that the change is
 ABI checks
 ----------
 
-Generally speaking, the `ABI <https://en.wikipedia.org/wiki/Application_binary_interface>`_ of a library might break for various reasons. A detailed explanation and a list of DOs and DON'Ts can be found in the `KDE Community Wiki <https://community.kde.org/Policies/Binary_Compatibility_Issues_With_C%2B%2B>`_.
+Generally speaking, the `ABI <https://en.wikipedia.org/wiki/Application_binary_interface>`_ of a library can break for various reasons. A detailed explanation and a list of DOs and DON'Ts can be found in the `KDE Community Wiki <https://community.kde.org/Policies/Binary_Compatibility_Issues_With_C%2B%2B>`_.
 
-The ABI checks with `industrial_ci` can be enabled by setting 'ABICHECK_URL' to the stable version (i.e. you want to check against with this for sure) of your code. Two types of value can be passed to `ABICHECK_URL`:
+The ABI checks with `industrial_ci` can be enabled by setting 'ABICHECK_URL' to the **stable version** of your code.
 
-- Branch.
+ABI check example configs
++++++++++++++++++++++++++
 
-  - Simplest thus recommended. Branch needs to be stable.
-  - URL must be pointing to an archive, not the branch itself. See the examples below.
-
-    - On GitHub, URL for a branch's archive can be https://github.com/%ORG%/%REPO%/archive/%BRANCH%.zip
-- Tagged version.
-
-The following is a few examples of those URL:
-
-- https://github.com/ros-industrial/ros_canopen/archive/kinetic.zip    (branch)
-- https://github.com/ros-industrial-release/ros_canopen-release/archive/upstream.zip
-- https://gitlab.com/ipa-mdl/ci-example/repository/master/archive.zip
-- https://github.com/ros-planning/moveit/archive/0.9.9.tar.gz          (tagged version)
-
-As an alternative the URL can be specified in shortcut form `provider:organization/repository#version`, which is supported for bitbucket, github and gitlab:
-
-- github:ros-industrial-release/ros_canopen-release#upstream           (branch)
-- gitlab:ipa-mdl/ci-example#master
-- github:ros-planning/moveit#0.9.9                                     (tagged version)
-
-
-ABI check examples:
-+++++++++++++++++++
-
-Simplest example: Check against a specific stable branch (e.g. `kinetic` branch) for push and PR tests:
+Simplest example: Check against a specific stable branch (e.g. `kinetic` branch) for push and pull request tests:
 ::
   - ROS_DISTRO=kinetic
     ABICHECK_URL='github:ros-industrial/ros_canopen#kinetic'
@@ -300,6 +278,33 @@ If pull requests should be checked against the merge parent instead of the stabl
   - ROS_DISTRO=kinetic
     ABICHECK_URL='github:ros-industrial/ros_canopen#kinetic'
     ABICHECK_MERGE=auto
+
+URL can be specified in shortcut form `provider:organization/repository#version`, which is supported for bitbucket, github and gitlab. "`version`" can be either one of the name of the branch, the tagged version, or even a commit. Some (more) concrete examples:
+
+- github:ros-industrial-release/ros_canopen-release#upstream           
+- gitlab:ipa-mdl/ci-example#master
+- github:ros-planning/moveit#0.9.9
+  
+Alternatively you can use the following forms as URL.:
+
+- https://github.com/ros-industrial/ros_canopen/archive/kinetic.zip
+- https://github.com/ros-industrial-release/ros_canopen-release/archive/upstream.zip
+- https://gitlab.com/ipa-mdl/ci-example/repository/master/archive.zip
+- https://github.com/ros-planning/moveit/archive/0.9.9.tar.gz
+
+With this format, the URL needs to point to an actual archive. E.g. on GitHub, URL for a branch's archive can be https://github.com/organization/repository/archive/branch.zip
+
+Tips for ABI check feature
+++++++++++++++++++++++++++
+
+It is up to each repository's maintainer for which baseline code you check ABI against. Here are some recommendations per possible situation:
+
+- Development branch and stable branch (i.e. mirroring the released code) are separately maintained --> checking against stable branch.
+- No stable branch -->
+
+  - Check against the latest tagged version.
+  - Or you could check against the same branch (this way every change in your branch will be examined for ABI compatibility, which is rigorous).
+
 
 (Optional) Customize `catkin config`
 ------------------------------------

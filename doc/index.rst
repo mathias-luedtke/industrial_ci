@@ -268,13 +268,13 @@ The ABI checks with `industrial_ci` can be enabled by setting 'ABICHECK_URL' to 
 ABI check example configs
 +++++++++++++++++++++++++
 
-Simplest example: Check against a specific stable branch (e.g. `kinetic` branch) for push and pull request tests:
-::
+Simplest example: Check against a specific stable branch (e.g. `kinetic` branch) for push and pull request tests::
+
   - ROS_DISTRO=kinetic
     ABICHECK_URL='github:ros-industrial/ros_canopen#kinetic'
 
-If pull requests should be checked against the merge parent instead of the stable version (travis only):
-::
+If pull requests should be checked against the merge parent instead of the stable version (Travis CI only). The only benefit is that PRs might pass even if the target branch breaks the ABI to the stable version.::
+
   - ROS_DISTRO=kinetic
     ABICHECK_URL='github:ros-industrial/ros_canopen#kinetic'
     ABICHECK_MERGE=auto
@@ -302,9 +302,11 @@ It is up to each repository's maintainer for which baseline code you check ABI a
 - Development branch and stable branch (i.e. mirroring the released code) are separately maintained --> checking against stable branch.
 - No stable branch -->
 
-  - Check against the latest tagged version.
-  - Or you could check against the same branch (this way every change in your branch will be examined for ABI compatibility, which is rigorous).
+  - Check against the stable tagged version.
+  - Or you could check against the same branch. This way:
 
+    - ABI check runs per every change/push into your branch, which is superfluous.
+    - Reasonable for pull requests.
 
 (Optional) Customize `catkin config`
 ------------------------------------

@@ -82,7 +82,7 @@ fi
 
 update_opts=()
 case "$ROS_DISTRO" in
-"hydro"|"jade")
+"jade")
     if rosdep update --help | grep -q -- --include-eol-distros; then
       update_opts+=(--include-eol-distros)
     fi
@@ -204,17 +204,7 @@ if [ "$NOT_TEST_BUILD" != "true" ]; then
     ici_time_start catkin_run_tests
     if [ "$BUILDER" == catkin ]; then
         catkin build --no-deps --catkin-make-args run_tests -- $OPT_RUN_V --no-status $PKGS_DOWNSTREAM $CATKIN_PARALLEL_TEST_JOBS --make-args $ROS_PARALLEL_TEST_JOBS --
-        if [ "${ROS_DISTRO}" == "hydro" ]; then
-            PATH=/usr/local/bin:$PATH  # for installed catkin_test_results
-            PYTHONPATH=/usr/local/lib/python2.7/dist-packages:$PYTHONPATH
-
-            if [ "${ROS_LOG_DIR// }" == "" ]; then export ROS_LOG_DIR=~/.ros/test_results; fi # http://wiki.ros.org/ROS/EnvironmentVariables#ROS_LOG_DIR
-            if [ "$BUILDER" == catkin -a -e $ROS_LOG_DIR ]; then catkin_test_results --all $ROS_LOG_DIR || error; fi
-            if [ "$BUILDER" == catkin -a -e $CATKIN_WORKSPACE/build/ ]; then catkin_test_results --all $CATKIN_WORKSPACE/build/ || error; fi
-            if [ "$BUILDER" == catkin -a -e ~/.ros/test_results/ ]; then catkin_test_results --all ~/.ros/test_results/ || error; fi
-        else
-            catkin_test_results --verbose $CATKIN_WORKSPACE || error
-        fi
+        catkin_test_results --verbose $CATKIN_WORKSPACE || error
     fi
     ici_time_end  # catkin_run_tests
 fi

@@ -81,9 +81,6 @@ fi
 
 if [ -z "$OS_CODE_NAME" ]; then
     case "$ROS_DISTRO" in
-    "hydro")
-        OS_CODE_NAME="precise"
-        ;;
     "indigo"|"jade")
         OS_CODE_NAME="trusty"
         ;;

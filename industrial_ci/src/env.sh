@@ -17,6 +17,7 @@
 # limitations under the License.
 
 ici_enforce_deprecated BEFORE_SCRIPT "Please migrate to new hook system."
+ici_enforce_deprecated NOT_TEST_INSTALL "testing installed test files has been removed."
 ici_mark_deprecated USE_DEB "Please migrate to UPSTREAM_WORKSPACE."
 ici_mark_deprecated UBUNTU_OS_CODE_NAME "Was renamed to OS_CODE_NAME."
 if [ ! "$CATKIN_PARALLEL_JOBS" ]; then export CATKIN_PARALLEL_JOBS="-p4"; fi

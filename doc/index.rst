@@ -191,7 +191,6 @@ Note that some of these currently tied only to a single option, but we still lea
 * **INIT_SCRIPT** (default: not set): Used to specify shell commands that run before any other commands. See more `here <./index.rst#run-pre-post-process-custom-commands>`_.
 * **INJECT_QEMU** (default: not set): Inject static qemu emulator for cross-platform builds, e.g. `INJECT_QEMU=arm`. This requires to install `qemu-user-static` on the host. The emulated build might take much longer!
 * **NOT_TEST_BUILD** (default: not set): If true, tests in `build` space won't be run.
-* **NOT_TEST_INSTALL** (default: not set): If true, tests in `install` space won't be run.
 * **OS_CODE_NAME** (default: derived from ROS_DISTRO): See `this section for the detail <https://github.com/ros-industrial/industrial_ci/blob/master/doc/index.rst#optional-type-of-os-and-distribution>`_.
 * **OS_NAME** (default: ubuntu): Possible options: {`ubuntu`, `debian`}. See `this section for the detail <https://github.com/ros-industrial/industrial_ci/blob/master/doc/index.rst#optional-type-of-os-and-distribution>`_.
 * **PRERELEASE** (default: false): If `true`, run `Prerelease Test on docker that emulates ROS buildfarm <http://wiki.ros.org/bloom/Tutorials/PrereleaseTest/>`_. The usage of Prerelease Test feature is `explained more in this section <https://github.com/ros-industrial/industrial_ci/blob/master/doc/index.rst#run-ros-prerelease-test>`_.

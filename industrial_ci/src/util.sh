@@ -184,6 +184,17 @@ function ici_retry {
   return $ret
 }
 
+function ici_quiet {
+    local out; out=$(mktemp)
+    local err=0
+    "$@" > "$out" || err=$?
+    if [ $err -ne 0 ]; then
+        cat "$out"
+    fi
+    rm "$out" || true
+    return $err
+}
+
 if ! which sudo > /dev/null; then
   function sudo {
     "$@"

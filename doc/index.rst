@@ -167,8 +167,7 @@ Note that some of these currently tied only to a single option, but we still lea
 * **ABICHECK_URL** (default: not set): Run binary compatibility check with `ABICC <https://github.com/lvc/abi-compliance-checker>`_. The URL should point to a baseline archive (\*.tar.\*,\*.zip, \*.tgz or \*.tbz2). See more in `the ABI checks section <#abi-checks>`_)
 * **ABICHECK_VERSION** (default: not set): Used only when `ABICHECK_URL` is set. Version name (for display only) of the set of code, which the location is specified in `ABICHECK_URL` of. The version will be automatically read from the URL passed in `ABICHECK_URL` if possible, but for a URL that doesn't point to a version-based file name (e.g. the link for a tagged version on Gitlab doesn't).
 * **ADDITIONAL_DEBS** (default: not set): More DEBs to be used. List the name of DEB(s delimitted by whitespace if multiple DEBs specified). Needs to be full-qualified Ubuntu package name. E.g.: "ros-indigo-roslint ros-indigo-gazebo-ros" (without quotation).
-* **AFTER_SCRIPT**: (default: not set): Used to specify shell commands that run after all source tests. NOTE: `Unlike Travis CI <https://docs.travis-ci.com/user/customizing-the-build#Breaking-the-Build>`_ where `after_script` doesn't affect the build result, the result in the commands specified with this DOES affect the build result. See more `here <./index.rst#run-pre-post-process-custom-commands>`_.
-* **BEFORE_SCRIPT**: (default: not set): Used to specify shell commands that run before building packages (more precisely, it gets called after the workspace to be built is prepared, but before the dependency of packages in that workspace is resolved). See more `here <./index.rst#run-pre-post-process-custom-commands>`_.
+* **AFTER_SCRIPT** (default: not set): Used to specify shell commands that run after all source tests. NOTE: `Unlike Travis CI <https://docs.travis-ci.com/user/customizing-the-build#Breaking-the-Build>`_ where `after_script` doesn't affect the build result, the result in the commands specified with this DOES affect the build result. See more `here <./index.rst#run-pre-post-process-custom-commands>`_.
 * **BUILD_PKGS_WHITELIST** (default: not set): Packages to be built can be explicitly specified with this, in ROS package name format (i.e. using underscore. No hyphen). This is useful when your repo contains some packages that you don't want to be used upon testing. Downstream packages, if necessary, should be also specified using this. Also these packages are to be built when `NOT_TEST_INSTALL` is set. Finally, packages specified with this will be built together with those speicified using unimplmented `USE_DEB`.
 * **BUILDER** (default: catkin): Currently only `catkin` is implemented (and with that `catkin_tools` is used instead of `catkin_make`. See `this discussion <https://github.com/ros-industrial/industrial_ci/issues/3>`_).
 * **CATKIN_CONFIG** (default: not set): `catkin config --install` is used by default and with this variable you can 1) pass additional config options, or 2) overwrite `--install` by `--no-install`. See more in `this section <https://github.com/ros-industrial/industrial_ci/blob/master/doc/index.rst#optional-customize-catkin-config>`_.
@@ -189,6 +188,7 @@ Note that some of these currently tied only to a single option, but we still lea
 * **DOCKER_PULL** (default: true): set to false if custom docker image should not be pulled, e.g. if it was created locally
 * **DOCKER_RUN_OPTS** (default: not set): Used to specify additional run options for Docker.
 * **EXPECT_EXIT_CODE** (default: 0): exit code must match this value for test to succeed
+* **INIT_SCRIPT** (default: not set): Used to specify shell commands that run before any other commands. See more `here <./index.rst#run-pre-post-process-custom-commands>`_.
 * **INJECT_QEMU** (default: not set): Inject static qemu emulator for cross-platform builds, e.g. `INJECT_QEMU=arm`. This requires to install `qemu-user-static` on the host. The emulated build might take much longer!
 * **NOT_TEST_BUILD** (default: not set): If true, tests in `build` space won't be run.
 * **NOT_TEST_INSTALL** (default: not set): If true, tests in `install` space won't be run.
@@ -501,22 +501,26 @@ You may want to add custom steps prior/subsequent to the setup defined in `indus
 Customize within the CI process
 ++++++++++++++++++++++++++++++++
 
-If what you want to customize is within the `CI process <#what-are-checked>`_, you can specify the script(s) in `BEFORE_SCRIPT` and/or `AFTER_SCRIPT` variables. For example::
+If what you want to customize is within the `CI process <#what-are-checked>`_, you can specify the script(s) in `BEFORE_*` and/or `AFTER_*` variables.
+The variables can be set for all functions, using the upper-case name, e.g. to run a script before `install_target_dependencies` you can specify `BEFORE_INSTALL_TARGET_DEPENDENCIES` or `AFTER_INSTALL_TARGET_DEPENDENCIES` to be run afterrwards.
+`INIT_SCRIPT` will be run before any test, `AFTER_SCRIPT` can be used to specify as script to be run after all tests.
+
+For example::
 
   env:
     global:
-      - BEFORE_SCRIPT='./your_custom_PREprocess.sh'
+      - INIT_SCRIPT='./your_custom_PREprocess.sh'
       - AFTER_SCRIPT='./your_custom_POSTprocess.sh'
   script:
     - .industrial_ci/ci.sh
 
 Multiple commands can be passed, as in a general `bash` manner.::
 
-    - BEFORE_SCRIPT='ls /tmp/1 && ls /tmp/2 || ls /tmp/3'
+    - INIT_SCRIPT='ls /tmp/1 && ls /tmp/2 || ls /tmp/3'
 
 Multiple commands are easier to be handled if they are put into a dedicated script::
 
-    - BEFORE_SCRIPT='./my_before_script.sh'
+    - INIT_SCRIPT='./my_before_script.sh'
 
 NOTE: In general the scripts are run as root in a Docker container. If you configure a different (base) Docker image, the user could be changed to non-root. But since we need to install packages the (base) image should set-up `sudo` for this user.
 

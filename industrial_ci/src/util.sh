@@ -31,6 +31,16 @@ function ici_color_output {
   echo -e "\e[${c}m$*\e[0m"
 }
 
+function ici_hook() {
+  local name=${1^^}
+  name=${name//[^A-Z0-9_]/_}
+
+  local script=${!name}
+  if [ -n "$script" ]; then
+    ici_run "$1" bash -e -c "$script"
+  fi
+}
+
 #######################################
 # Starts a timer section on Travis CI
 #
@@ -47,6 +57,7 @@ function ici_color_output {
 #######################################
 
 function ici_time_start {
+    ici_hook "before_${1}"
     if [ "$DEBUG_BASH" ] && [ "$DEBUG_BASH" == true ]; then set +x; fi
     ICI_START_TIME=$(date +%s%N)
     ICI_TIME_ID=$(printf "%x" $ICI_START_TIME)
@@ -90,6 +101,8 @@ function ici_time_end {
 
     unset ICI_FOLD_NAME
     if [ "$DEBUG_BASH" ] && [ "$DEBUG_BASH" == true ]; then set -x; fi
+    ici_hook "after_${name}"
+
 }
 
 function ici_run {

@@ -170,3 +170,24 @@ function install_dependencies {
     ici_exec_in_workspace "$extend" "." rosdep install "${rosdep_opts[@]}" | { grep "executing command" || true; }
     set +o pipefail
 }
+
+function ici_build_workspace {
+    local name=$1; shift
+    local extend=$1; shift
+    local ws=$1; shift
+
+    local ws_env="${name^^}_WORKSPACE"
+    local sources=("$@" ${!ws_env})
+    ici_run "setup_${name}_workspace" ici_prepare_sourcespace "$ws/src" "${sources[@]}"
+    ici_run "install_${name}_dependencies" install_dependencies "$extend" "$ROSDEP_SKIP_KEYS" "$ws/src"
+    ici_run "build_${name}_workspace" builder_run_build "$extend" "$ws"
+}
+
+function ici_test_workspace {
+    local name=$1; shift
+    local extend=$1; shift
+    local ws=$1; shift
+
+    ici_run "run_${name}_test" builder_run_tests "$extend" "$ws"
+    builder_test_results "$extend" "$ws"
+}

@@ -25,6 +25,8 @@ function abi_install() {
 
     git clone --depth 1 https://github.com/universal-ctags/ctags.git /tmp/ctags
     (cd /tmp/ctags && ./autogen.sh && ./configure && sudo make install)
+
+    ici_install_pkgs_for_command catkin python-catkin-tools
 }
 
 
@@ -51,9 +53,6 @@ function abi_build_workspace() {
     local workspace="$base/$version"
 
     local cflags="-g -Og"
-
-    rosdep install -q --from-paths "$workspace/src" --ignore-src -y
-
     catkin config --init --install -w "$workspace" --extend "/opt/ros/$ROS_DISTRO" --cmake-args -DCMAKE_C_FLAGS="$cflags" -DCMAKE_CXX_FLAGS="$cflags"
     catkin build -w "$workspace"
 
@@ -61,17 +60,6 @@ function abi_build_workspace() {
     for l in "$workspace/install/lib"/*.so; do
         abi-dumper "$l" -ld-library-path "/opt/ros/$ROS_DISTRO/lib" -o "$workspace/abi_dumps/$(basename "$l" .so).dump" -lver "$version" -public-headers "$workspace/install/include"
     done
-}
-
-function abi_setup_rosdep() {
-    # Setup rosdep
-    rosdep --version
-    if ! [ -d /etc/ros/rosdep/sources.list.d ]; then
-        sudo rosdep init
-    fi
-    ret_rosdep=1
-    rosdep update || while [ $ret_rosdep != 0 ]; do sleep 1; rosdep update && ret_rosdep=0 || echo "rosdep update failed"; done
-    ici_quiet rosdep install -q --from-paths "$TARGET_REPO_PATH" --ignore-src -y
 }
 
 function run_abi_check() {
@@ -120,27 +108,18 @@ function run_abi_check() {
 
     ici_require_run_in_docker # this script must be run in docker
 
-    ici_time_start install_abi_compliance_checker
-    ici_quiet abi_install
-    ici_time_end  # install_abi_compliance_checker
+    ici_run "install_abi_compliance_checker" ici_quiet abi_install
+    ici_run "setup_rosdep" ici_setup_rosdep
+    ici_run "abi_get_base" abi_prepare_src "/abicheck/old/$ABICHECK_VERSION/src" "$ABICHECK_URL"
+    ici_run "install_base_dependencies" install_dependencies "/opt/ros/$ROS_DISTRO" "$ROSDEP_SKIP_KEYS" "/abicheck/old/$ABICHECK_VERSION/src"
 
-    ici_time_start abi_get_base
-    abi_prepare_src "/abicheck/old/$ABICHECK_VERSION/src" "$ABICHECK_URL"
-    ici_time_end  # abi_get_base
-
-    ici_time_start setup_rosdep
-    abi_setup_rosdep
-    ici_time_end  # setup_rosdep
-
-    ici_time_start abi_build_new
     mkdir -p "/abicheck/new/src"
-    ln -s "$TARGET_REPO_PATH" "/abicheck/new/src"
-    abi_build_workspace /abicheck new
-    ici_time_end  # abi_build_new
+    cp -a "$TARGET_REPO_PATH" "/abicheck/new/src"
 
-    ici_time_start abi_build_base
-    abi_build_workspace /abicheck/old "$ABICHECK_VERSION"
-    ici_time_end  # abi_build_base
+    ici_run "install_new_dependencies" install_dependencies "/opt/ros/$ROS_DISTRO" "$ROSDEP_SKIP_KEYS" "/abicheck/old/$ABICHECK_VERSION/src"
+    ici_run "abi_build_new" abi_build_workspace /abicheck new
+
+    ici_run "abi_build_base" abi_build_workspace /abicheck/old "$ABICHECK_VERSION"
 
     local reports_dir="/abicheck/reports/$ABICHECK_VERSION"
     mkdir -p "$reports_dir"

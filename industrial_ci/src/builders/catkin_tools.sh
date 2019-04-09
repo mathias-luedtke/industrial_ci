@@ -31,10 +31,6 @@ function builder_run_build {
     local ws=$1; shift
     local opts=($OPT_VI)
     ici_exec_in_workspace "$extend" "$ws" catkin config --install
-    if [ -n "$CATKIN_CONFIG" ]; then
-      local config=($CATKIN_CONFIG)
-      ici_exec_in_workspace "$extend" "$ws" eval catkin config "${config[@]}"
-    fi
     ici_exec_in_workspace "$extend" "$ws" catkin build "${opts[@]}" --summarize  --no-status
 }
 

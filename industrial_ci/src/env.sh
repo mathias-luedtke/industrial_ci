@@ -18,6 +18,7 @@
 
 ici_enforce_deprecated BEFORE_SCRIPT "Please migrate to new hook system."
 ici_enforce_deprecated NOT_TEST_INSTALL "testing installed test files has been removed."
+ici_enforce_deprecated CATKIN_CONFIG "Explicit catkin configuration is not available anymore."
 
 for v in BUILD_PKGS_WHITELIST PKGS_DOWNSTREAM TARGET_PKGS USE_MOCKUP; do
     ici_enforce_deprecated "$v" "Please migrate to new workspace definition"

@@ -17,7 +17,7 @@
 
 function run_clang_format_check() {
   local err=0
-  local path=$TARGET_REPO_PATH
+  local path; path=$(mktemp -d)
 
   DOCKER_IMAGE="$DOCKER_BASE_IMAGE" ici_require_run_in_docker # this script must be run in docker
 
@@ -29,12 +29,8 @@ function run_clang_format_check() {
   ici_quiet sudo apt-get install -qq -y git-core "$clang_format_executable"
   ici_time_end # install_clang_format
 
-  if [ -n "$USE_MOCKUP" ]; then
-    if [ ! -d "$TARGET_REPO_PATH/$USE_MOCKUP" ]; then
-        error "mockup directory '$USE_MOCKUP' does not exist"
-    fi
-    path="$TARGET_REPO_PATH/$USE_MOCKUP"
-  fi
+  local sources=($TARGET_REPO_PATH $TARGET_WORKSPACE)
+  ici_run "prepare_sourcespace" ici_prepare_sourcespace "$path" "${sources[@]}"
 
   ici_time_start run_clang_format_check
   while read -r file; do

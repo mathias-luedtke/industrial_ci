@@ -20,87 +20,66 @@
 # It is dependent on environment variables that need to be exported in advance
 # (As of version 0.4.4 most of them are defined in env.sh).
 
-function setup_environment() {
+function setup_ros_prerelease() {
+    useradd -m -d "$WORKSPACE/home" ci
+
+    if [ -e /var/run/docker.sock ]; then
+        groupadd -o -g "$(stat -c%g /var/run/docker.sock)" host_docker
+        usermod -a -G host_docker ci
+    fi
+
+    sudo apt-get update -qq
+    ici_quiet sudo apt-get -qq install -y docker.io python3-pip python3-yaml sudo
+    unset -f sudo
+    sudo pip3 install git+https://github.com/ros-infrastructure/ros_buildfarm.git
+}
+
+function prepare_prerelease_workspaces() {
+  local underlay=($UPSTREAM_WORKSPACE $TARGET_WORKSPACE)
+  local workspace=$1
+  local reponame=$2
+  ici_prepare_sourcespace "$workspace/ws/src/" "${underlay[@]}"
+
+  cp -a "$TARGET_REPO_PATH" "$workspace/ws/src/$reponame"
+
+  local overlay=($DOWNSTREAM_WORKSPACE)
+  ici_prepare_sourcespace "$workspace/ws_overlay/src/" "${overlay[@]}"
+  chown -R ci "$workspace"
+}
+
+function run_ros_prerelease() {
+    local ws; ws=$(mktemp -d)
     export WORKSPACE
-    WORKSPACE=$(mktemp -d)
-    echo "WORKSPACE: $WORKSPACE"
+
+    local opts=($DOCKER_RUN_OPTS
+               -e TRAVIS -e OS_NAME -e OS_CODE_NAME -e OS_ARCH -e PRERELEASE_DOWNSTREAM_DEPTH -e PRERELEASE_REPONAME -e ROSDISTRO_INDEX_URL
+               -v "$ws:$ws:rw" -e "WORKSPACE=$ws")
 
     if [ -n "$DOCKER_PORT" ]; then
-        DIND_OPTS=(-e "DOCKER_HOST=$DOCKER_PORT")
-        user_cmd="useradd ci"
+        opts+=(-e "DOCKER_HOST=$DOCKER_PORT")
     elif [ -e /var/run/docker.sock ]; then
-        DIND_OPTS=(-v /var/run/docker.sock:/var/run/docker.sock)
-        user_cmd="groupadd -o -g $(stat -c%g /var/run/docker.sock) host_docker && useradd -G host_docker ci"
-    else
-        error "Could not detect docker settings"
+        opts+=(-v /var/run/docker.sock:/var/run/docker.sock)
     fi
+    DOCKER_RUN_OPTS="${opts[*]}" DOCKER_IMAGE=${DOCKER_IMAGE:-ros:$ROS_DISTRO-ros-core} ici_require_run_in_docker
 
-    ici_quiet docker build -t "industrial-ci/prerelease" - <<EOF
-FROM ubuntu:xenial
+    ici_run "setup_ros_prerelease" setup_ros_prerelease
 
-RUN apt-get update -qq && apt-get -qq install --no-install-recommends -y wget apt-transport-https ca-certificates
-
-RUN echo "deb ${ROS_REPOSITORY_PATH} xenial main" > /etc/apt/sources.list.d/ros-latest.list
-RUN apt-key adv --keyserver "${APTKEY_STORE_SKS}" --recv-key "${HASHKEY_SKS}" \
-    || { wget "${APTKEY_STORE_HTTPS}" -O - | apt-key add -; }
-
-RUN echo "deb [arch=\$(dpkg --print-architecture)] https://download.docker.com/linux/ubuntu xenial stable" > /etc/apt/sources.list.d/docker.list
-RUN wget -O - https://download.docker.com/linux/ubuntu/gpg |  apt-key add -
-
-RUN apt-get update -qq \
-    && apt-get -qq install --no-install-recommends -y \
-        docker-ce \
-        git \
-        python-ros-buildfarm \
-        ros-kinetic-catkin \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-RUN $user_cmd
-USER ci
-ENV WORKSPACE $WORKSPACE
-WORKDIR $WORKSPACE
-ENTRYPOINT ["/opt/ros/kinetic/env.sh"]
-EOF
-}
-
-function run_in_prerelease_docker() {
-    ici_run_cmd_in_docker "${DIND_OPTS[@]}" \
-                          -v "$WORKSPACE:$WORKSPACE:rw" \
-                          -e TRAVIS \
-                          "industrial-ci/prerelease" \
-                          "$@"
-
-}
-function run_ros_prerelease() {
     # Environment vars.
     local downstream_depth=${PRERELEASE_DOWNSTREAM_DEPTH:-"0"}
-
-    ici_time_start setup_environment
-    setup_environment
-    ici_time_end  # setup_environment
-
-    ici_time_start setup_prerelease_scripts
-    mkdir -p "$WORKSPACE/catkin_workspace/src/"
     local reponame=${PRERELEASE_REPONAME:-$TARGET_REPO_NAME}
-    cp -a "$TARGET_REPO_PATH" "$WORKSPACE/catkin_workspace/src/$reponame"
 
-    # ensure access rights
-    ici_run_cmd_in_docker "${DIND_OPTS[@]}" -v "$WORKSPACE:$WORKSPACE:rw"  --user root  "industrial-ci/prerelease" chown -R ci:ci "$WORKSPACE"
-
-
-    if [ "${USE_MOCKUP// }" != "" ]; then
-        if [ ! -d "$TARGET_REPO_PATH/$USE_MOCKUP" ]; then
-            error "mockup directory '$USE_MOCKUP' does not exist"
-        fi
-        cp -a "$TARGET_REPO_PATH/$USE_MOCKUP" "$WORKSPACE/catkin_workspace/src"
+    if [ -z "$ROSDISTRO_INDEX_URL" ]; then
+      if [ "$ROS_DISTRO" = "$ROS2_DISTRO" ]; then
+          ROSDISTRO_INDEX_URL="https://raw.githubusercontent.com/ros2/ros_buildfarm_config/ros2/index.yaml"
+          ici_quiet ici_install_pkgs_for_command colcon python3-colcon-common-extensions
+      else
+          ROSDISTRO_INDEX_URL="https://raw.githubusercontent.com/ros-infrastructure/ros_buildfarm_config/production/index.yaml"
+      fi
     fi
 
-    run_in_prerelease_docker generate_prerelease_script.py https://raw.githubusercontent.com/ros-infrastructure/ros_buildfarm_config/production/index.yaml "$ROS_DISTRO" default "$OS_NAME" "$OS_CODE_NAME" "${OS_ARCH:-amd64}" --level "$downstream_depth" --output-dir . --custom-repo "$reponame::::"
-    ici_time_end  # setup_prerelease_scripts
-
-    ici_time_start prerelease.sh
-    run_in_prerelease_docker env ABORT_ON_TEST_FAILURE=1 ./prerelease.sh -y
-    ici_time_end  # prerelease.sh
+    ici_run "prepare_prerelease_workspaces" prepare_prerelease_workspaces "$WORKSPACE" "$reponame"
+    ici_run 'generate_prerelease_script' sudo -EH -u ci generate_prerelease_script.py "${ROSDISTRO_INDEX_URL}" "$ROS_DISTRO" default "$OS_NAME" "$OS_CODE_NAME" "${OS_ARCH:-amd64}" --level "$downstream_depth" --output-dir "$WORKSPACE" --custom-repo "$reponame::::"
+    ABORT_ON_TEST_FAILURE=1 ici_run "run_prerelease_script" sudo -EH -u ci sh -c "mkdir -p ~/.ccache && . '/opt/ros/$ROS_DISTRO/setup.sh' && cd '$WORKSPACE' && exec ./prerelease.sh -y"
 
     echo 'ROS Prerelease Test went successful.'
 }

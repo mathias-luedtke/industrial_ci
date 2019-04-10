@@ -17,6 +17,9 @@
 
 function builder_setup {
     ici_install_pkgs_for_command colcon python3-colcon-common-extensions
+    if [ "$ROS_DISTRO" = "$ROS1_DISTRO" ]; then
+        sudo apt-get install --reinstall "ros-$ROS_DISTRO-catkin"
+    fi
 }
 
 function builder_run_build {

@@ -11,7 +11,7 @@ Introduction
 
 This repository contains `CI (Continuous Integration) <https://en.wikipedia.org/wiki/Continuous_integration>`_ configuration that can be commonly used by the repositories in `ros-industrial <https://github.com/ros-industrial>`_ organization. Non ros-industrial repositories in other organizations can utilize the CI config here too, as long as they are ROS-powered.
 
-As of November 2017, this repo provides configuration for `Travis CI` and `Gitlab CI`. The CI scripts in this repository are intended to be obtained by `git clone` feature. In client repos you can define custom, repository-specific checks, in addition to the generic configs stored in this repo.
+As of November 2017, this repo provides scripts for `Travis CI` and `Gitlab CI`. The CI scripts in this repository are intended to be obtained by `git clone` feature. In client repos you can define custom, repository-specific checks, in addition to the generic configs stored in this repo.
 
 For a brief introduction, you could also check a presentation:
 
@@ -23,13 +23,16 @@ Supported Platform
 Supported ROS Distributions
 +++++++++++++++++++++++++++
 
-Following `ROS distributions <http://wiki.ros.org/action/login/Distributions>`_ are supported.
+Following `ROS distributions <http://wiki.ros.org/Distributions>`_  / `ROS2 <https://index.ros.org/doc/ros2/Releases/>`_ are supported.
 
 * `Indigo <http://wiki.ros.org/indigo>`_
 * `Jade <http://wiki.ros.org/jade>`_ *(EOL)*
 * `Kinetic <http://wiki.ros.org/kinetic>`_
 * `Lunar <http://wiki.ros.org/lunar>`_
 * `Melodic <http://wiki.ros.org/melodic>`_
+* `Ardent <https://index.ros.org/doc/ros2/Releases/Release-Ardent-Apalone/>`__
+* `Bouncy <https://index.ros.org/doc/ros2/Releases/Bouncy/>`__
+* `Crystal <https://index.ros.org/doc/ros2/Releases/Release-Crystal-Clemmys/>`__
 
 Supported CIs
 +++++++++++++
@@ -167,6 +170,7 @@ Note that some of these currently tied only to a single option, but we still lea
 * **ABICHECK_VERSION** (default: not set): Used only when `ABICHECK_URL` is set. Version name (for display only) of the set of code, which the location is specified in `ABICHECK_URL` of. The version will be automatically read from the URL passed in `ABICHECK_URL` if possible, but for a URL that doesn't point to a version-based file name (e.g. the link for a tagged version on Gitlab doesn't).
 * **ADDITIONAL_DEBS** (default: not set): More DEBs to be used. List the name of DEB(s delimitted by whitespace if multiple DEBs specified). Needs to be full-qualified Ubuntu package name. E.g.: "ros-indigo-roslint ros-indigo-gazebo-ros" (without quotation).
 * **AFTER_SCRIPT** (default: not set): Used to specify shell commands that run after all source tests. NOTE: `Unlike Travis CI <https://docs.travis-ci.com/user/customizing-the-build#Breaking-the-Build>`_ where `after_script` doesn't affect the build result, the result in the commands specified with this DOES affect the build result. See more `here <./index.rst#run-pre-post-process-custom-commands>`_.
+* **BUILDER** (default: catkin_tools for ROS1, colcon for ROS2): Select the builder e.g. to build ROS1 packages with colcon
 * **CATKIN_LINT** (default: not set. Value range: [true|pedantic]): If `true`, run `catkin_lint <http://fkie.github.io/catkin_lint/>`_ with `--explain` option. If `pedantic`, `catkin_lint` command runs with `--strict -W2` option, i.e. more verbose output will print, and the CI job fails if there's any error and/or warning occurs.
 * **CATKIN_LINT_ARGS** (default: not set): If true, you can pass whatever argument(s) `catkin_lint` takes, except `--explain` that is set by default. Options can be delimit by space if passing multiple.
 * **CCACHE_DIR** (default: not set): If set, `ccache <https://en.wikipedia.org/wiki/Ccache>`_ gets enabled for your build to speed up the subsequent builds in the same job if anything. See `detail. <https://github.com/ros-industrial/industrial_ci/blob/master/doc/index.rst#cache-build-artifacts-to-speed-up-the-subsequent-builds-if-any>`_
@@ -192,7 +196,7 @@ Note that some of these currently tied only to a single option, but we still lea
 * **PRERELEASE** (default: false): If `true`, run `Prerelease Test on docker that emulates ROS buildfarm <http://wiki.ros.org/bloom/Tutorials/PrereleaseTest/>`_. The usage of Prerelease Test feature is `explained more in this section <https://github.com/ros-industrial/industrial_ci/blob/master/doc/index.rst#run-ros-prerelease-test>`_.
 * **PRERELEASE_DOWNSTREAM_DEPTH** (0 to 4, default: 0): Number of the levels of the package dependecies the Prerelease Test targets at. Range of the level is defined by ROS buildfarm (`<http://prerelease.ros.org>`_). NOTE: a job can run exponentially longer for the values greater than `0` depending on how many packages depend on your package (and remember a job on Travis CI can only run for up to 50 minutes).
 * **PRERELEASE_REPONAME** (default: TARGET_REPO_NAME): The  name of the target of Prerelease Test in rosdistro (that you select at `<http://prerelease.ros.org>`_). You can specify this if your repository name differs from the corresponding rosdisto entry. See `here <https://github.com/ros-industrial/industrial_ci/pull/145/files#r108062114>`_ for more usage.
-* **ROS_REPO** (default: ros-shadow-fixed): `ROS_REPO` can be used to set `ROS_REPOSITORY_PATH` based on known aliases: 'ros`/`main`, 'ros-shadow-fixed`/`testing` or `building`.
+* **ROS_REPO** (default: main): `ROS_REPO` can be used to set `ROS_REPOSITORY_PATH` based on known aliases: 'ros`/`main`, 'ros-shadow-fixed`/`testing` or `building`.
 * **ROS_REPOSITORY_PATH**: Location of ROS' binary repositories where depended packages get installed from (typically both standard repo (`http://packages.ros.org/ros/ubuntu`) and `"Shadow-Fixed" repository <http://wiki.ros.org/ShadowRepository>`_ (`http://packages.ros.org/ros-shadow-fixed/ubuntu`)). Since version 0.3.4, `ROS_REPO` is recommended, and `ROS_REPOSITORY_PATH` is for more intermediate usage only (e.g. to specify your own binary repository (non-standard / in house)). Backward compatibility is preserved.
 * **ROSDEP_SKIP_KEYS** (default: not set): space-separated list of keys that should get skipped by `rosdep install`.
 * **ROSINSTALL_FILENAME** (*deprecated*, default: .travis.rosinstall): Only used when `UPSTREAM_WORKSPACE` is set to `file`. See `UPSTREAM_WORKSPACE` description.

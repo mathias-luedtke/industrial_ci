@@ -89,7 +89,7 @@ function set_ros_variables {
             ;;
         *)
             if [ -n "$ROS1_DISTRO" ]; then
-                error "ROS1 repo '$ROS1_REPO' is not supported"
+                ici_error "ROS1 repo '$ROS1_REPO' is not supported"
             fi
             ;;
         esac
@@ -106,7 +106,7 @@ function set_ros_variables {
             ;;
         *)
             if [ -n "$ROS2_DISTRO" ]; then
-                error "ROS2 repo '$ROS2_REPO' is not supported"
+                ici_error "ROS2 repo '$ROS2_REPO' is not supported"
             fi
             ;;
         esac
@@ -125,7 +125,7 @@ export ROS_DISTRO
 if [ -z "$OS_NAME" ]; then
     OS_NAME=ubuntu
 elif [ -z "$OS_CODE_NAME" ]; then
-    error "please specify OS_CODE_NAME"
+    ici_error "please specify OS_CODE_NAME"
 fi
 
 if [ -n "$UBUNTU_OS_CODE_NAME" ]; then # for backward-compatibility
@@ -141,14 +141,14 @@ if [ -z "$OS_CODE_NAME" ]; then
           ROS_DISTRO=$(docker image inspect --format "{{.Config.Env}}" "${DOCKER_IMAGE:-$DOCKER_BASE_IMAGE}" | grep -o -P "(?<=ROS_DISTRO=)[a-z]*") || true
         fi
         if [ -z "$ROS_DISTRO" ]; then
-            error "Please specify ROS_DISTRO"
+            ici_error "Please specify ROS_DISTRO"
         fi
         set_ros_variables
         ;;
     *)
         set_ros_variables
         if [ -z "$DEFAULT_OS_CODE_NAME" ]; then
-            error "ROS distro '$ROS_DISTRO' is not supported"
+            ici_error "ROS distro '$ROS_DISTRO' is not supported"
         fi
         OS_CODE_NAME=$DEFAULT_OS_CODE_NAME
         DEFAULT_DOCKER_IMAGE=${DEFAULT_DOCKER_IMAGE-ros:${ROS_DISTRO}-ros-core}
@@ -175,7 +175,7 @@ fi
 
 if [ "$USE_DEB" = true ]; then
   if [ "${UPSTREAM_WORKSPACE:-debian}" != "debian" ]; then
-    error "USE_DEB and UPSTREAM_WORKSPACE are in conflict"
+    ici_error "USE_DEB and UPSTREAM_WORKSPACE are in conflict"
   fi
   ici_warn "Setting 'USE_DEB=true' is superfluous"
 fi
@@ -188,7 +188,7 @@ if [ "$UPSTREAM_WORKSPACE" = "file" ] || [ "${USE_DEB:-true}" != true ]; then
 
   if [ "${USE_DEB:-true}" != true ]; then # means UPSTREAM_WORKSPACE=file
       if [ "${UPSTREAM_WORKSPACE:-file}" != "file" ]; then
-        error "USE_DEB and UPSTREAM_WORKSPACE are in conflict"
+        ici_error "USE_DEB and UPSTREAM_WORKSPACE are in conflict"
       fi
       ici_warn "Replacing 'USE_DEB=false' with 'UPSTREAM_WORKSPACE=$ROSINSTALL_FILENAME'"
   else

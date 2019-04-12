@@ -40,7 +40,7 @@ function run_clang_format_check() {
   done < <(find "$path"/* -iname '*.h' -or -iname '*.hpp' -or -iname '*.c' -or -iname '*.cc' -or -iname '*.cpp' -or -iname '*.cxx')
 
   if [ "$err" -ne "0" ]; then
-      error "Clang format check failed for $err file(s)."
+      ici_error "Clang format check failed for $err file(s)."
       echo "Changes required to comply to formatting rules. See diff above."
       exit 1
   fi

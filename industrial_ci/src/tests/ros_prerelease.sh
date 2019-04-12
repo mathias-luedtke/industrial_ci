@@ -28,10 +28,9 @@ function setup_ros_prerelease() {
         usermod -a -G host_docker ci
     fi
 
-    sudo apt-get update -qq
-    ici_quiet sudo apt-get -qq install -y docker.io python3-pip python3-yaml sudo
-    unset -f sudo
-    sudo pip3 install git+https://github.com/ros-infrastructure/ros_buildfarm.git
+    ici_asroot apt-get update -qq
+    ici_quiet ici_asroot apt-get -qq install -y docker.io python3-pip python3-yaml sudo
+    ici_asroot pip3 install git+https://github.com/ros-infrastructure/ros_buildfarm.git
 }
 
 function prepare_prerelease_workspaces() {

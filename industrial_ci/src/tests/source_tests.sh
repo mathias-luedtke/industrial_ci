@@ -24,7 +24,7 @@
 
 function run_catkin_lint {
     local path=$1; shift
-    sudo pip install catkin-lint
+    ici_asroot pip install catkin-lint
     if catkin_lint --explain "$@" "$path"; then
         echo "catkin_lint passed."
     else
@@ -39,16 +39,16 @@ function run_source_tests {
     ici_require_run_in_docker # this script must be run in docker
 
     ici_time_start setup_apt
-    sudo apt-get update -qq
+    ici_asroot apt-get update -qq
     # If more DEBs needed during preparation, define ADDITIONAL_DEBS variable where you list the name of DEB(S, delimitted by whitespace)
     if [ "$ADDITIONAL_DEBS" ]; then
         local debs=($ADDITIONAL_DEBS)
-        sudo apt-get install -qq -y "${debs[@]}" || ici_error "One or more additional deb installation is failed. Exiting."
+        ici_asroot apt-get install -qq -y "${debs[@]}" || ici_error "One or more additional deb installation is failed. Exiting."
     fi
     ici_time_end  # setup_apt
 
     if [ "$CCACHE_DIR" ]; then
-        ici_run "setup_ccache" sudo apt-get install -qq -y ccache
+        ici_run "setup_ccache" ici_asroot apt-get install -qq -y ccache
         export PATH="/usr/lib/ccache:$PATH"
     fi
 

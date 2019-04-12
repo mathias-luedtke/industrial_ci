@@ -217,8 +217,10 @@ function ici_quiet {
     return $err
 }
 
-if ! which sudo > /dev/null; then
-  function sudo {
-    "$@"
-  }
-fi
+function ici_asroot {
+  if which ici_asroot > /dev/null; then
+      sudo "$@"
+  else
+      "$@"
+  fi
+}

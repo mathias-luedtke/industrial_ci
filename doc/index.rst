@@ -33,6 +33,7 @@ Following `ROS distributions <http://wiki.ros.org/Distributions>`_  / `ROS2 <htt
 * `Ardent <https://index.ros.org/doc/ros2/Releases/Release-Ardent-Apalone/>`__
 * `Bouncy <https://index.ros.org/doc/ros2/Releases/Bouncy/>`__
 * `Crystal <https://index.ros.org/doc/ros2/Releases/Release-Crystal-Clemmys/>`__
+* `Dashing <https://index.ros.org/doc/ros2/Releases/Release-Dashing-Diademata/>`__
 
 Supported CIs
 +++++++++++++

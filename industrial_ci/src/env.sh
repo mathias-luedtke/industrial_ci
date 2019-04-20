@@ -72,6 +72,11 @@ function set_ros_variables {
     "bouncy"|"crystal")
         ros2_defaults "bionic"
         ;;
+    "dashing")
+        ROS2_REPO=${ROS2_REPO:-${ROS_REPO:-ros2-testing}}
+        ros2_defaults "bionic"
+        DEFAULT_DOCKER_IMAGE=""
+        ;;
     esac
 
     if [ ! "$ROS1_REPOSITORY_PATH" ]; then

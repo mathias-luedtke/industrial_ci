@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Copyright (c) 2016, Isaac I. Y. Saito
-# Copyright (c) 2018, Mathias Lüdtke
+# Copyright (c) 2017, Mathias Lüdtke
+# Copyright (c) 2018, Alexander Rössler
 # All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,31 +17,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This is the entrypoint for Travis CI only.
+# This is the entrypoint for BitBucket Pipelines only.
 
 # 2016/05/18 http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 DIR_THIS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-export TARGET_REPO_PATH=$TRAVIS_BUILD_DIR
-export TARGET_REPO_NAME=${TRAVIS_REPO_SLUG##*/}
+export TARGET_REPO_PATH=$BITBUCKET_CLONE_DIR
+export TARGET_REPO_NAME=${BITBUCKET_REPO_SLUG##*/}
 export PYTHONUNBUFFERED=${PYTHONUNBUFFERED:1}
+export _DO_NOT_FOLD=true
 
-export DOCKER_BUILD_OPTS="--network=host $DOCKER_BUILD_OPTS"
-export DOCKER_RUN_OPTS="--network=host $DOCKER_RUN_OPTS"
-
-if [ "$ABICHECK_MERGE" = "auto" ]; then
-  export ABICHECK_MERGE=false
-  [ "$TRAVIS_PULL_REQUEST" = "false" ] || ABICHECK_MERGE=true
-fi
-
-function watch_output() {
-  while read -r -t "${_GUARD_INTERVAL:-540}" ||
-        { [[ $? -gt 128 ]] &&
-          echo -en "${ANSI_YELLOW}...industrial_ci is still running...${ANSI_RESET}"; }
-  do
-    echo "$REPLY"
-  done
-}
-
-set -o pipefail
-env "$@" stdbuf -oL -eL bash "$DIR_THIS"/industrial_ci/src/ci_main.sh |& watch_output
+env "$@" bash $DIR_THIS/industrial_ci/src/ci_main.sh

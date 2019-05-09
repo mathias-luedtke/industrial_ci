@@ -65,6 +65,8 @@ function ici_require_run_in_docker() {
 #######################################
 function ici_run_cmd_in_docker() {
   local run_opts=($DOCKER_RUN_OPTS)
+  local commit_image=$DOCKER_COMMIT
+  unset DOCKER_COMMIT
 
   #forward ssh agent into docker container
  local ssh_docker_opts=()
@@ -78,27 +80,51 @@ function ici_run_cmd_in_docker() {
      run_opts+=(-v "$CCACHE_DIR:/root/.ccache" -e CCACHE_DIR=/root/.ccache)
   fi
 
+  if [ -n "$INJECT_QEMU" ]; then
+    local qemu_path
+    qemu_path=$(which "qemu-$INJECT_QEMU-static") || error "please install qemu-user-static"
+    run_opts+=(-v "$qemu_path:$qemu_path:ro")
+  fi
+
   local cid
   cid=$(docker create \
       --env-file "${ICI_SRC_PATH}"/docker.env \
       "${run_opts[@]}" \
       "$@")
-  if [ -d ~/.ssh ]; then
-    docker cp ~/.ssh "$cid:/root/" # pass SSH settings to container
-  fi
-  if [ -d ~/.subversion ]; then
-    docker cp ~/.subversion "$cid:/root/" # pass svn auth to container
-  fi
+
+  # detect user inside container
+  local docker_image
+  docker_image=$(docker inspect --format='{{.Config.Image}}' "$cid")
+  docker_uid=$(docker run --rm "${run_opts[@]}" "$docker_image" id -u)
+  docker_gid=$(docker run --rm "${run_opts[@]}" "$docker_image" id -g)
+
+  # pass common credentials to container
+  for d in .docker .ssh .subversion; do
+    if [ -d "$HOME/$d" ]; then
+      docker_cp "$HOME/$d" "$cid:/root/"
+    fi
+  done
 
   docker start -a "$cid" &
   trap 'docker kill $cid' INT
   local ret=0
   wait %% || ret=$?
   trap - INT
+  if [ -n "$commit_image" ]; then
+    echo "Committing container to tag: '$commit_image'"
+    docker commit -m "$DOCKER_COMMIT_MSG" "$cid" "$commit_image" > /dev/null
+  fi
   docker rm "$cid" > /dev/null
   return $ret
 }
 
+# work-around for https://github.com/moby/moby/issues/34096
+# ensures that copied files are owned by the target user
+function docker_cp {
+  set -o pipefail
+  tar --numeric-owner --owner=${docker_uid:-root} --group=${docker_gid:-root} -c -f - -C "$(dirname $1)" "$(basename $1)" | docker cp - $2
+  set +o pipefail
+}
 #######################################
 # wrapper for docker build
 #
@@ -115,6 +141,9 @@ function ici_run_cmd_in_docker() {
 #######################################
 function ici_docker_build() {
   local opts=($DOCKER_BUILD_OPTS)
+  if [ "$DOCKER_PULL" != false ]; then
+    opts+=("--pull")
+  fi
   docker build -t "$DOCKER_IMAGE" "${opts[@]}" "$@"
 }
 
@@ -146,7 +175,7 @@ function ici_prepare_docker_image() {
     fi
   elif [ -z "$DOCKER_IMAGE" ]; then # image was not provided, use default
      ici_build_default_docker_image
-  else
+  elif [ "$DOCKER_PULL" != false ]; then
      docker pull "$DOCKER_IMAGE"
   fi
   ici_time_end # prepare_docker_image
@@ -167,6 +196,22 @@ function ici_prepare_docker_image() {
 #   (None)
 
 function ici_build_default_docker_image() {
+  if [ -n "$INJECT_QEMU" ]; then
+    local qemu_path
+    qemu_path=$(which "qemu-$INJECT_QEMU-static") || error "please install qemu-user-static"
+    echo "Inject qemu..."
+    local qemu_temp
+    qemu_temp=$(mktemp -d)
+    cat <<EOF > "$qemu_temp/Dockerfile"
+    FROM $DOCKER_BASE_IMAGE
+    COPY '$(basename $qemu_path)' '$qemu_path'
+EOF
+    cp "$qemu_path" "$qemu_temp"
+    unset INJECT_QEMU
+    export DOCKER_BASE_IMAGE="$DOCKER_BASE_IMAGE-qemu"
+    DOCKER_IMAGE="$DOCKER_BASE_IMAGE" ici_docker_build "$qemu_temp" > /dev/null
+    rm -rf "$qemu_temp"
+  fi
   # choose a unique image name
   export DOCKER_IMAGE="industrial-ci/$ROS_DISTRO/$DOCKER_BASE_IMAGE"
   echo "Building image '$DOCKER_IMAGE':"
@@ -179,14 +224,16 @@ function ici_generate_default_dockerfile() {
   cat <<EOF
 FROM $DOCKER_BASE_IMAGE
 
+ENV ROS_DISTRO $ROS_DISTRO
+
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 RUN apt-get update -qq \
-    && apt-get -qq install --no-install-recommends -y apt-utils gnupg wget ca-certificates sudo lsb-release
+    && apt-get -qq install --no-install-recommends -y apt-utils gnupg wget ca-certificates lsb-release
 
 RUN echo "deb ${ROS_REPOSITORY_PATH} \$(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list
 RUN apt-key adv --keyserver "${APTKEY_STORE_SKS}" --recv-key "${HASHKEY_SKS}" \
-    || { wget "${APTKEY_STORE_HTTPS}" -O - | sudo apt-key add -; }
+    || { wget "${APTKEY_STORE_HTTPS}" -O - | apt-key add -; }
 
 RUN sed -i "/^# deb.*multiverse/ s/^# //" /etc/apt/sources.list \
     && apt-get update -qq \
@@ -202,4 +249,3 @@ RUN sed -i "/^# deb.*multiverse/ s/^# //" /etc/apt/sources.list \
     && rm -rf /var/lib/apt/lists/*
 EOF
 }
-

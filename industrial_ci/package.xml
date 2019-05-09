@@ -1,18 +1,19 @@
 <package>
   <name>industrial_ci</name>
-  <version>0.4.0</version>
+  <version>0.7.0</version>
   <description>This package contains CI (Continuous Integration) configuration that any ROS-powered packages can commonly use. Some notable feature:
     <ul>
       <li>Checks if your package builds, installs without issues. If unit/system tests are defined run them. <a href = "http://wiki.ros.org/bloom/Tutorials/PrereleaseTest">ROS Prerelease Test</a> can optionally be run.</li>
       <li>Proven to cover the general requirements of the ROS-based robotics repositories. Easily configurable.</li>
       <li>Users can add custom pre/post processes.</li>
-      <li>Covers ROS Indigo, Jade, Kinetic distribution.</li>
-      <li>As of January 2017, this repo provides configuration for Travis CI only, although it should be easily deployed from other CI services.</li>
+      <li>Covers ROS Hydro, Indigo, Jade, Kinetic, Lunar, Melodic distribution</li>
+      <li>This package provides scripts for `Bitbucket CI`, `Gitlab CI`, and `Travis CI` only, but it can be easily adapted for other CI services.</li>
     </ul>
   </description>
   <license>Apache License 2.0</license>
   <maintainer email="iisaito@kinugarage.com">Isaac I. Y. Saito</maintainer>
   <maintainer email="mathias.luedtke@ipa.fraunhofer.de">Mathias Lüdtke</maintainer>
+  <maintainer email="miguel.prada@tecnalia.com">Miguel Prada</maintainer>
   <author>Isaac I. Y. Saito</author>
   <author email="mathias.luedtke@ipa.fraunhofer.de">Mathias Lüdtke</author>
 
@@ -23,6 +24,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <run_depend>python-rospkg</run_depend>
+  <run_depend>python-yaml</run_depend>
 
   <export/>
 </package>

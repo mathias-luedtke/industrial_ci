@@ -2,6 +2,44 @@
 Changelog for package industrial_ci
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.0 (2019-01-02)
+------------------
+* [capability] Add clang-format check (`#320 <https://github.com/ros-industrial/industrial_ci/issues/320>`_, `#340 <https://github.com/ros-industrial/industrial_ci/issues/340>`_)
+* [capability] Re-use previous local CI run `#279 <https://github.com/ros-industrial/industrial_ci/issues/279>`_
+* [capability] Allow reuse Docker image `#341 <https://github.com/ros-industrial/industrial_ci/issues/341>`_
+* [capability] Automatically set ROS_DISTRO from Docker image if not specified `#280 <https://github.com/ros-industrial/industrial_ci/issues/280>`_
+* [capability] ROS melodic support `#271 <https://github.com/ros-industrial/industrial_ci/issues/271>`_
+* [deprecation] USE_DEB, UBUNTU_OS_CODE_NAME
+* [fix] Run Travis CI locally `#331 <https://github.com/ros-industrial/industrial_ci/issues/331>`_, `#265 <https://github.com/ros-industrial/industrial_ci/issues/265>`_ 
+* [maintenance] remove rosdep hack `#287 <https://github.com/ros-industrial/industrial_ci/issues/287>`_
+* [improve] Better output text `#328 <https://github.com/ros-industrial/industrial_ci/issues/328>`_
+* [improve] Speed up CI by skipping Docker pull `#283 <https://github.com/ros-industrial/industrial_ci/issues/283>`_
+* Contributors: Felix Messmer, Isaac I.Y. Saito, Jonathan Hechtbauer, Mathias Lüdtke, Miguel Prada, Wolfgang Merkt
+
+0.6.0 (2018-01-13)
+------------------
+* [capability] You can run industrial_ci locally on your computer using configuration in your .travis.yml `#230 <https://github.com/ros-industrial/industrial_ci/issues/230>`_
+* [capability] Inject QEMU `#237 <https://github.com/ros-industrial/industrial_ci/issues/237>`_ from ipa-mdl/feature/inject-qemu
+* [improve] Easier to use your custom Docker image `#259 <https://github.com/ros-industrial/industrial_ci/issues/259>`_
+* Contributors: Isaac I.Y. Saito, Mathias Lüdtke
+
+0.5.1 (2017-12-29)
+------------------
+* [fix] Workaround for the regression in "docker cp" `moby/moby#34096 <https://github.com/moby/moby/issues/34096>`_ (`#248 <https://github.com/ros-industrial/industrial_ci/issues/248>`_).
+  * Gitlab CI users need to take an action. See `this post <https://github.com/ros-industrial/industrial_ci/pull/248#pullrequestreview-85975989>`_
+* [improve] Verbose catkin test results `#251 <https://github.com/ros-industrial/industrial_ci/issues/251>`_
+* Contributors: Mathias Lüdtke
+
+0.5.0 (2017-12-12)
+------------------
+* [fix] ROS Prerelease Test by updating to the latest Docker CE `#238 <https://github.com/ros-industrial/industrial_ci/pull/238>`_
+* [capability] ABI check based on abi-compliance-checker `#199 <https://github.com/ros-industrial/industrial_ci/issues/199>`_
+* [capability] catkin_lint feature. `#219 <https://github.com/ros-industrial/industrial_ci/issues/219>`_
+* [capability] implemented ROSDEP_SKIP_KEYS feature `#184 <https://github.com/ros-industrial/industrial_ci/pull/184>`_
+* [enhance] Add support for ARM platform `#236 <https://github.com/ros-industrial/industrial_ci/issues/236>`_
+* Many more bug fixes.
+* Contributors: Mathias Lüdtke, Miguel Prada, Isaac I.Y. Saito
+
 0.4.0 (2017-06-29)
 ------------------
 * [capability] ROS buildfarm-powered pre-release tests can now run for even the repositories that are not listed in rosdistro https://github.com/ros-industrial/industrial_ci/pull/145

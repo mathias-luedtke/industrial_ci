@@ -25,10 +25,17 @@
 ici_require_run_in_docker # this script must be run in docker
 
 #Define some verbose env vars
+#verbose build
 if [ "$VERBOSE_OUTPUT" ] && [ "$VERBOSE_OUTPUT" == true ]; then
     OPT_VI="-vi"
 else
     OPT_VI=""
+fi
+#verbose run tests
+if [ "$VERBOSE_TESTS" == false ]; then
+    OPT_RUN_V=""
+else
+    OPT_RUN_V="-v"
 fi
 
 ici_time_start init_ici_environment
@@ -39,9 +46,11 @@ ROSWS=wstool
 ici_time_end  # init_ici_environment
 
 function catkin {
+  local path
+  path=$(which catkin) || error "catkin not available. Make sure python-catkin-tools is installed. See also https://github.com/ros-industrial/industrial_ci/issues/216"
   local cmd=$1
   shift
-  /usr/bin/catkin "$cmd" -w "$CATKIN_WORKSPACE" "$@"
+  "$path" "$cmd" -w "$CATKIN_WORKSPACE" "$@"
 }
 
 ici_time_start setup_apt
@@ -70,8 +79,17 @@ rosdep --version
 if ! [ -d /etc/ros/rosdep/sources.list.d ]; then
     sudo rosdep init
 fi
-ret_rosdep=1
-rosdep update || while [ $ret_rosdep != 0 ]; do sleep 1; rosdep update && ret_rosdep=0 || echo "rosdep update failed"; done
+
+update_opts=()
+case "$ROS_DISTRO" in
+"hydro"|"jade")
+    if rosdep update --help | grep -q -- --include-eol-distros; then
+      update_opts+=(--include-eol-distros)
+    fi
+    ;;
+esac
+
+ici_retry 2 rosdep update "${update_opts[@]}"
 
 ici_time_end  # setup_rosdep
 
@@ -81,7 +99,9 @@ ici_time_start setup_rosws
 # Create workspace
 export CATKIN_WORKSPACE=~/catkin_ws
 mkdir -p $CATKIN_WORKSPACE/src
-$ROSWS init $CATKIN_WORKSPACE/src
+if [ ! -f $CATKIN_WORKSPACE/src/.rosinstall ]; then
+  $ROSWS init $CATKIN_WORKSPACE/src
+fi
 case "$UPSTREAM_WORKSPACE" in
 debian)
     echo "Obtain deb binary for upstream packages."
@@ -115,14 +135,14 @@ fi
 if [ "$WRITABLE_SOURCE" = true ]; then
     cp -a "$TARGET_REPO_PATH" "$CATKIN_WORKSPACE/src/"
 else
-    ln -s $TARGET_REPO_PATH $CATKIN_WORKSPACE/src
+    ln -sf $TARGET_REPO_PATH $CATKIN_WORKSPACE/src
 fi
 
 if [ "${USE_MOCKUP// }" != "" ]; then
     if [ ! -d "$TARGET_REPO_PATH/$USE_MOCKUP" ]; then
         error "mockup directory '$USE_MOCKUP' does not exist"
     fi
-    ln -s "$TARGET_REPO_PATH/$USE_MOCKUP" $CATKIN_WORKSPACE/src
+    ln -sf "$TARGET_REPO_PATH/$USE_MOCKUP" $CATKIN_WORKSPACE/src
 fi
 
 catkin config --install
@@ -142,7 +162,7 @@ fi
 
 ici_time_start rosdep_install
 
-rosdep_opts=(-q --from-paths $CATKIN_WORKSPACE --ignore-src --rosdistro $ROS_DISTRO -y)
+rosdep_opts=(-q --from-paths $CATKIN_WORKSPACE/src --ignore-src --rosdistro $ROS_DISTRO -y)
 if [ -n "$ROSDEP_SKIP_KEYS" ]; then
   rosdep_opts+=(--skip-keys "$ROSDEP_SKIP_KEYS")
 fi
@@ -152,23 +172,55 @@ set +o pipefail
 
 ici_time_end  # rosdep_install
 
+if [ "$CATKIN_LINT" == "true" ] || [ "$CATKIN_LINT" == "pedantic" ]; then
+    ici_time_start catkin_lint
+    sudo pip install catkin-lint
+    if [ "$CATKIN_LINT" == "pedantic" ]; then
+    	CATKIN_LINT_ARGS="$CATKIN_LINT_ARGS --strict -W2"
+    fi
+    catkin_lint --explain $CATKIN_LINT_ARGS $TARGET_REPO_PATH && echo "catkin_lint passed." || error "catkin_lint failed by either/both errors and/or warnings"
+    ici_time_end  # catkin_lint
+fi
+
 ici_time_start catkin_build
 
 # for catkin
 if [ "${TARGET_PKGS// }" == "" ]; then export TARGET_PKGS=`catkin_topological_order ${TARGET_REPO_PATH} --only-names`; fi
+# fall-back to all workspace packages if target repo does not contain any packages (#232)
+if [ "${TARGET_PKGS// }" == "" ]; then export TARGET_PKGS=`catkin_topological_order $CATKIN_WORKSPACE/src --only-names`; fi
 if [ "${PKGS_DOWNSTREAM// }" == "" ]; then export PKGS_DOWNSTREAM=$( [ "${BUILD_PKGS_WHITELIST// }" == "" ] && echo "$TARGET_PKGS" || echo "$BUILD_PKGS_WHITELIST"); fi
 if [ "$BUILDER" == catkin ]; then catkin build $OPT_VI --summarize  --no-status $BUILD_PKGS_WHITELIST $CATKIN_PARALLEL_JOBS --make-args $ROS_PARALLEL_JOBS            ; fi
 
 ici_time_end  # catkin_build
 
 if [ "$NOT_TEST_BUILD" != "true" ]; then
-    ici_time_start catkin_run_tests
-
+    ici_time_start catkin_build_downstream_pkgs
     if [ "$BUILDER" == catkin ]; then
-        catkin run_tests $OPT_VI --no-deps --no-status $PKGS_DOWNSTREAM $CATKIN_PARALLEL_TEST_JOBS --make-args $ROS_PARALLEL_TEST_JOBS --
-        catkin_test_results $CATKIN_WORKSPACE || error
+        catkin build $OPT_VI --summarize  --no-status $PKGS_DOWNSTREAM $CATKIN_PARALLEL_JOBS --make-args $ROS_PARALLEL_JOBS
     fi
+    ici_time_end  # catkin_build_downstream_pkgs
 
+    ici_time_start catkin_build_tests
+    if [ "$BUILDER" == catkin ]; then
+        catkin build --no-deps --catkin-make-args tests -- $OPT_VI --summarize  --no-status $PKGS_DOWNSTREAM $CATKIN_PARALLEL_JOBS --make-args $ROS_PARALLEL_JOBS --
+    fi
+    ici_time_end  # catkin_build_tests
+
+    ici_time_start catkin_run_tests
+    if [ "$BUILDER" == catkin ]; then
+        catkin build --no-deps --catkin-make-args run_tests -- $OPT_RUN_V --no-status $PKGS_DOWNSTREAM $CATKIN_PARALLEL_TEST_JOBS --make-args $ROS_PARALLEL_TEST_JOBS --
+        if [ "${ROS_DISTRO}" == "hydro" ]; then
+            PATH=/usr/local/bin:$PATH  # for installed catkin_test_results
+            PYTHONPATH=/usr/local/lib/python2.7/dist-packages:$PYTHONPATH
+
+            if [ "${ROS_LOG_DIR// }" == "" ]; then export ROS_LOG_DIR=~/.ros/test_results; fi # http://wiki.ros.org/ROS/EnvironmentVariables#ROS_LOG_DIR
+            if [ "$BUILDER" == catkin -a -e $ROS_LOG_DIR ]; then catkin_test_results --all $ROS_LOG_DIR || error; fi
+            if [ "$BUILDER" == catkin -a -e $CATKIN_WORKSPACE/build/ ]; then catkin_test_results --all $CATKIN_WORKSPACE/build/ || error; fi
+            if [ "$BUILDER" == catkin -a -e ~/.ros/test_results/ ]; then catkin_test_results --all ~/.ros/test_results/ || error; fi
+        else
+            catkin_test_results --verbose $CATKIN_WORKSPACE || error
+        fi
+    fi
     ici_time_end  # catkin_run_tests
 fi
 
@@ -189,9 +241,9 @@ if [ "$NOT_TEST_INSTALL" != "true" ]; then
           echo "[$pkg] Testing $test_file"
           $CATKIN_WORKSPACE/install/env.sh rostest $test_file || EXIT_STATUS=$?
           if [ $EXIT_STATUS != 0 ]; then
-            echo -e "[$pkg] Testing again the failed test: $test_file.\e[31m>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\e[0m"
+            echo -e "[$pkg] Testing again the failed test: $test_file.\e[${ANSI_RED}m>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\e[0m"
             $CATKIN_WORKSPACE/install/env.sh rostest --text $test_file
-            echo -e "[$pkg] Testing again the failed test: $test_file.\e[31m<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\e[0m"
+            echo -e "[$pkg] Testing again the failed test: $test_file.\e[${ANSI_RED}m<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\e[0m"
           fi
         done
       done
@@ -201,19 +253,3 @@ if [ "$NOT_TEST_INSTALL" != "true" ]; then
     ici_time_end  # catkin_install_run_tests
 
 fi
-
-ici_time_start test_results
-
-if [ "${ROS_DISTRO}" == "hydro" ]; then
-    PATH=/usr/local/bin:$PATH  # for installed catkin_test_results
-    PYTHONPATH=/usr/local/lib/python2.7/dist-packages:$PYTHONPATH
-
-    if [ "${ROS_LOG_DIR// }" == "" ]; then export ROS_LOG_DIR=~/.ros/test_results; fi # http://wiki.ros.org/ROS/EnvironmentVariables#ROS_LOG_DIR
-    if [ "$BUILDER" == catkin -a -e $ROS_LOG_DIR ]; then catkin_test_results --all $ROS_LOG_DIR || error; fi
-    if [ "$BUILDER" == catkin -a -e $CATKIN_WORKSPACE/build/ ]; then catkin_test_results --all $CATKIN_WORKSPACE/build/ || error; fi
-    if [ "$BUILDER" == catkin -a -e ~/.ros/test_results/ ]; then catkin_test_results --all ~/.ros/test_results/ || error; fi
-else
-    catkin_test_results --verbose $CATKIN_WORKSPACE
-fi
-
-ici_time_end  # test_results

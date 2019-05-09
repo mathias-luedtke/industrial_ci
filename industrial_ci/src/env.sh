@@ -16,6 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ici_mark_deprecated USE_DEB "Please migrate to UPSTREAM_WORKSPACE."
+ici_mark_deprecated UBUNTU_OS_CODE_NAME "Was renamed to OS_CODE_NAME."
 if [ ! "$CATKIN_PARALLEL_JOBS" ]; then export CATKIN_PARALLEL_JOBS="-p4"; fi
 if [ ! "$CATKIN_PARALLEL_TEST_JOBS" ]; then export CATKIN_PARALLEL_TEST_JOBS="$CATKIN_PARALLEL_JOBS"; fi
 if [ ! "$ROS_PARALLEL_JOBS" ]; then export ROS_PARALLEL_JOBS="-j8"; fi
@@ -85,6 +87,21 @@ if [ -z "$OS_CODE_NAME" ]; then
         ;;
     "kinetic"|"lunar")
         OS_CODE_NAME="xenial"
+        ;;
+    "melodic")
+        OS_CODE_NAME="bionic"
+        ;;
+    "")
+        if [ -n "$DOCKER_IMAGE" ] || [ -n "$DOCKER_BASE_IMAGE" ]; then
+          # try to reed ROS_DISTRO from imgae
+          if [ "$DOCKER_PULL" != false ]; then
+            docker pull "${DOCKER_IMAGE:-$DOCKER_BASE_IMAGE}"
+          fi
+          export ROS_DISTRO=$(docker image inspect --format "{{.Config.Env}}" "${DOCKER_IMAGE:-$DOCKER_BASE_IMAGE}" | grep -o -P "(?<=ROS_DISTRO=)[a-z]*")
+        fi
+        if [ -z "$ROS_DISTRO" ]; then
+            error "Please specify ROS_DISTRO"
+        fi
         ;;
     *)
         error "ROS distro '$ROS_DISTRO' is not supported"

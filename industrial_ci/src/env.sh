@@ -43,24 +43,6 @@ if [ -z "${CPPFLAGS}" ]; then unset CPPFLAGS; fi
 if [ -z "${CXX}" ]; then unset CXX; fi
 if [ -z "${CXXFLAGS}" ]; then unset CXXLAGS; fi
 
-# If not specified, use ROS Shadow repository http://wiki.ros.org/ShadowRepository
-if [ ! "$ROS_REPOSITORY_PATH" ]; then
-    case "${ROS_REPO:-ros-shadow-fixed}" in
-    "building")
-        ROS_REPOSITORY_PATH="http://repositories.ros.org/ubuntu/building/"
-        ;;
-    "ros"|"main")
-        ROS_REPOSITORY_PATH="http://packages.ros.org/ros/ubuntu"
-        ;;
-    "ros-shadow-fixed"|"testing")
-        ROS_REPOSITORY_PATH="http://packages.ros.org/ros-shadow-fixed/ubuntu"
-        ;;
-    *)
-        ici_error "ROS repo '$ROS_REPO' is not supported"
-        ;;
-    esac
-fi
-
 export OS_CODE_NAME
 export OS_NAME
 export DOCKER_BASE_IMAGE
@@ -109,6 +91,34 @@ if [ -z "$OS_CODE_NAME" ]; then
         ;;
     *)
         ici_error "ROS distro '$ROS_DISTRO' is not supported"
+        ;;
+    esac
+fi
+if [ "$ROS_VERSION_EOL" = true ]; then
+  if [ ! "$HASHKEY_SKS" ]; then export HASHKEY_SKS="AD19BAB3CBF125EA"; fi
+  ROS_REPO_SERVER="http://snapshots.ros.org"
+  ROS_REPO_TESTING="ros-testing"
+
+else
+  if [ ! "$HASHKEY_SKS" ]; then export HASHKEY_SKS="0xB01FA116"; fi
+  ROS_REPO_SERVER="http://packages.ros.org"
+  ROS_REPO_TESTING="ros-shadow-fixed"
+fi
+
+# If not specified, use ROS Shadow repository http://wiki.ros.org/ShadowRepository
+if [ ! "$ROS_REPOSITORY_PATH" ]; then
+    case "${ROS_REPO:-ros-shadow-fixed}" in
+    "building")
+        ROS_REPOSITORY_PATH="http://repositories.ros.org/ubuntu/building/"
+        ;;
+    "ros"|"main")
+        ROS_REPOSITORY_PATH="${ROS_REPO_SERVER}/ros/ubuntu"
+        ;;
+    "ros-shadow-fixed"|"testing")
+        ROS_REPOSITORY_PATH="${ROS_REPO_SERVER}/${ROS_REPO_TESTING}/ubuntu"
+        ;;
+    *)
+        ici_error "ROS repo '$ROS_REPO' is not supported"
         ;;
     esac
 fi

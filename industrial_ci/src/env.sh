@@ -94,15 +94,9 @@ if [ -z "$OS_CODE_NAME" ]; then
         ;;
     esac
 fi
-if [ "$ROS_VERSION_EOL" = true ]; then
-  if [ ! "$HASHKEY_SKS" ]; then export HASHKEY_SKS="AD19BAB3CBF125EA"; fi
-  ROS_REPO_SERVER="http://snapshots.ros.org"
-  ROS_REPO_TESTING="ros-testing"
 
-else
-  if [ ! "$HASHKEY_SKS" ]; then export HASHKEY_SKS="0xB01FA116"; fi
-  ROS_REPO_SERVER="http://packages.ros.org"
-  ROS_REPO_TESTING="ros-shadow-fixed"
+if [ "$ROS_VERSION_EOL" = true ]; then
+    ROS_REPO="${ROS_REPO:-final}"
 fi
 
 # If not specified, use ROS Shadow repository http://wiki.ros.org/ShadowRepository
@@ -115,7 +109,11 @@ if [ ! "$ROS_REPOSITORY_PATH" ]; then
         ROS_REPOSITORY_PATH="${ROS_REPO_SERVER}/ros/ubuntu"
         ;;
     "ros-shadow-fixed"|"testing")
-        ROS_REPOSITORY_PATH="${ROS_REPO_SERVER}/${ROS_REPO_TESTING}/ubuntu"
+        ROS_REPOSITORY_PATH="${ROS_REPO_SERVER}/ros-testing/ubuntu"
+        ;;
+    "final" | ????-??-??)
+        ROS_REPOSITORY_PATH="http://snapshots.ros.org/${ROS_DISTRO}/${ROS_REPO}/ubuntu"
+        HASHKEY_SKS="AD19BAB3CBF125EA"
         ;;
     *)
         ici_error "ROS repo '$ROS_REPO' is not supported"

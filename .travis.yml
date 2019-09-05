@@ -16,10 +16,10 @@ env:
     - BEFORE_INIT="sed -i -e 's%http://archive.ubuntu.com/ubuntu%mirror://mirrors.ubuntu.com/mirrors.txt%' /etc/apt/sources.list"
 
   matrix:
-    - ROS_DISTRO=indigo
-    - ROS_DISTRO=kinetic
-    - ROS_DISTRO=melodic
-    - ROS_DISTRO=dashing
+    - ROS_DISTRO=indigo  ROS_REPO=main
+    - ROS_DISTRO=kinetic ROS_REPO=main
+    - ROS_DISTRO=melodic ROS_REPO=main
+    - ROS_DISTRO=dashing ROS_REPO=main
 
 script:
   - industrial_ci/_wrap_test.sh # this script is only for internal use

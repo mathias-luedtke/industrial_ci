@@ -22,4 +22,5 @@ env:
     - ROS_DISTRO=dashing
     
 script:
+  - sudo apt-get install -qq -y apt-cacher-ng
   - industrial_ci/_wrap_test.sh # this script is only for internal use

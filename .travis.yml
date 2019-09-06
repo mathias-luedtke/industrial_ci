@@ -14,13 +14,14 @@ git:
 env:
   global:
     - POST_PROCESS='echo "post processing reached"'
+    - DOCKER_BUIILD_OPTS="--build-arg http_proxy=http://172.17.0.1:3142" DOCKER_RUN_OPTS="-e http_proxy=http://172.17.0.1:3142"
 
   matrix:
     - ROS_DISTRO=indigo
     - ROS_DISTRO=kinetic
     - ROS_DISTRO=melodic
     - ROS_DISTRO=dashing
-    
+
 script:
   - sudo apt-get install -qq -y apt-cacher-ng
   - industrial_ci/_wrap_test.sh # this script is only for internal use

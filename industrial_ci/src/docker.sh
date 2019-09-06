@@ -260,13 +260,12 @@ ENV ROS_DISTRO $ROS_DISTRO
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 
+RUN sed -i -e '/^# deb.*multiverse/ s/^# //' -e 's%http://archive.ubuntu.com/ubuntu%http://us-east-1.ec2.archive.ubuntu.com/ubuntu%' /etc/apt/sources.list
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 RUN apt-get update && apt-get install -y apt-utils gnupg2 wget ca-certificates lsb-release dirmngr python-pip python3-pip
 
 RUN for i in 1 2 3; do { $keycmd; } &&  break || sleep 1; done
 RUN echo "deb ${ROS_REPOSITORY_PATH} \$(lsb_release -sc) main" > /etc/apt/sources.list.d/ros${ROS_VERSION}-latest.list
-
-RUN sed -i "/^# deb.*multiverse/ s/^# //" /etc/apt/sources.list  && apt-get update -qq
 EOF
 }

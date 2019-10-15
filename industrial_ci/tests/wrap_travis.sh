@@ -35,12 +35,11 @@ if [ -n "$_EXTERNAL_REPO" ]; then
 fi
 
 if [ -n "$_ROS_DISTROS" ]; then
-  for r in $_ROS_DISTROS; do
-    echo
-    echo "ROS_DISTRO=$r"
-    echo "##################"
+  # shellcheck source=industrial_ci/src/util.sh
+  source "$DIR_THIS/../src/util.sh"
 
-    ROS_DISTRO=$r "$DIR_THIS/../../travis.sh"
+  for r in $_ROS_DISTROS; do
+    ici_run "ROS_DISTRO=$r" "$DIR_THIS/../../travis.sh" "ROS_DISTRO=$r"
   done
 else
   "$DIR_THIS/../../travis.sh"

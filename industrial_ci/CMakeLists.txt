@@ -5,6 +5,12 @@ if("$ENV{ROS_VERSION}" EQUAL "2")
     cmake_policy(VERSION 3.5)
 
     find_package(ament_cmake REQUIRED)
+
+    if(BUILD_TESTING)
+      find_package(ament_cmake_lint_cmake REQUIRED)
+      ament_lint_cmake()
+    endif()
+
     ament_package()
 
     set(${PROJECT_NAME}_BIN_DESTINATION lib/${PROJECT_NAME})

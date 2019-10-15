@@ -64,8 +64,8 @@ env:
     - ROS_DISTRO=melodic ROS_REPO=ros UPSTREAM_WORKSPACE=file AFTER_SCRIPT='num=($(ccache -s | grep "files in cache")) && (( num[-1] > 0 ))'
 
     # test ADDITIONAL_DEBS
-    - ROS_DISTRO=melodic ROS_REPO=ros ADDITIONAL_DEBS="ros-hydro-opencv3"
-    - ROS_DISTRO=melodic ROS_REPO=ros ADDITIONAL_DEBS="ros-melodic-opencv3" EXPECT_EXIT_CODE=100 # This should fail (trying from a wrong distro).
+    - ROS_DISTRO=melodic ROS_REPO=ros ADDITIONAL_DEBS="ros-melodic-actionlib"
+    - ROS_DISTRO=melodic ROS_REPO=ros ADDITIONAL_DEBS="ros-hydro-actionlib" EXPECT_EXIT_CODE=100 # This should fail (trying from a wrong distro).
 
     # test DOCKER_COMMIT
     - DOCKER_BASE_IMAGE="ros:kinetic-ros-base" ROS_REPO=ros NOT_TEST_BUILD='true' DOCKER_COMMIT="img_temp" POST_PROCESS='eval docker image inspect $DOCKER_COMMIT --format="$DOCKER_COMMIT: \"{{.Size}}\" bytes"'
@@ -86,7 +86,7 @@ env:
     - ROS_DISTRO=kinetic _EXTERNAL_REPO='github:ros-industrial/ros_canopen#0.7.6' ABICHECK_URL='github:ros-industrial/ros_canopen#0.7.5' ABICHECK_MERGE=false
 
     # test CLANG_FORMAT_CHECK
-    - ROS_DISTRO=melodic TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/LLVM' CLANG_FORMAT_CHECK='LLVM' CLANG_FORMAT_VERSION=3.8
+    - ROS_DISTRO=indigo TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/LLVM' CLANG_FORMAT_CHECK='LLVM' CLANG_FORMAT_VERSION=3.8
     - ROS_DISTRO=melodic TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/LLVM' CLANG_FORMAT_CHECK='LLVM'
     - ROS_DISTRO=melodic TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/WebKit' CLANG_FORMAT_CHECK='LLVM' EXPECT_EXIT_CODE=1
     - ROS_DISTRO=melodic TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/WebKit' CLANG_FORMAT_CHECK='file'

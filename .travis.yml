@@ -23,7 +23,7 @@ env:
     - ROS_DISTRO=kinetic ROS_REPO=ros
     - ROS_DISTRO=lunar   ROS_REPO=ros
     - ROS_DISTRO=melodic ROS_REPO=ros
-    - ROS_DISTRO=ardent  ROS_REPO=ros
+    - ROS_DISTRO=ardent  ROS_REPO=ros AFTER_SETUP_TARGET_WORKSPACE='sed -i -e "/!= 2/d" -e "s/ condition=\"\$ROS_VERSION == 2\"//g" $target_ws/src/industrial_ci/industrial_ci/package.xml'
     - ROS_DISTRO=bouncy  ROS_REPO=ros
     - ROS_DISTRO=crystal ROS_REPO=ros
     - ROS_DISTRO=dashing ROS_REPO=ros

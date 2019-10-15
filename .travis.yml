@@ -18,27 +18,18 @@ cache:
 env:
   matrix:
     # normal run for all supported distros
-    - ROS_DISTRO=indigo  ROS_REPO=ros
-    - ROS_DISTRO=jade    ROS_REPO=ros
-    - ROS_DISTRO=kinetic ROS_REPO=ros
-    - ROS_DISTRO=lunar   ROS_REPO=ros
-    - ROS_DISTRO=melodic ROS_REPO=ros
+    - _ROS_DISTROS='indigo jade' ROS_REPO=ros
+    - _ROS_DISTROS='kinetic lunar' ROS_REPO=ros
     - ROS_DISTRO=ardent  ROS_REPO=ros AFTER_SETUP_TARGET_WORKSPACE='sed -i -e "/!= 2/d" -e "s/ condition=\"\$ROS_VERSION == 2\"//g" $target_ws/src/industrial_ci/industrial_ci/package.xml'
-    - ROS_DISTRO=bouncy  ROS_REPO=ros
-    - ROS_DISTRO=crystal ROS_REPO=ros
-    - ROS_DISTRO=dashing ROS_REPO=ros
+    - _ROS_DISTROS='melodic bouncy crystal dashing' ROS_REPO=ros
 
     # testing run for non-EOL distros
     - ROS_DISTRO=kinetic ROS_REPO=testing
-    - ROS_DISTRO=melodic ROS_REPO=testing
-    - ROS_DISTRO=crystal ROS_REPO=testing
-    - ROS_DISTRO=dashing ROS_REPO=testing
 
+    - _ROS_DISTROS='melodic crystal dashing' ROS_REPO=testing
     # prerelease run for non-EOL distros
     - ROS_DISTRO=kinetic PRERELEASE=true
-    - ROS_DISTRO=melodic PRERELEASE=true
-    - ROS_DISTRO=crystal PRERELEASE=true
-    - ROS_DISTRO=dashing PRERELEASE=true
+    - _ROS_DISTROS='melodic crystal dashing' PRERELEASE=true
 
     # test CMAKE_ARGS
     - ROS_DISTRO=melodic ROS_REPO=ros TARGET_WORKSPACE='industrial_ci/tests/industrial_ci_testpkg' CMAKE_ARGS="-DFAIL_CMAKE=true" EXPECT_EXIT_CODE=1

@@ -34,4 +34,14 @@ if [ -n "$_EXTERNAL_REPO" ]; then
     export TRAVIS_REPO_SLUG="${urldirname##*/}/${urlbasename%.git}"
 fi
 
-"$DIR_THIS/../../travis.sh"
+if [ -n "$_ROS_DISTROS" ]; then
+  for r in $_ROS_DISTROS; do
+    echo
+    echo "ROS_DISTRO=$r"
+    echo "##################"
+
+    ROS_DISTRO=$r "$DIR_THIS/../../travis.sh"
+  done
+else
+  "$DIR_THIS/../../travis.sh"
+fi

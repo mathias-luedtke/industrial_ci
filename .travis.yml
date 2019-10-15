@@ -55,8 +55,8 @@ env:
 
     # test CATKIN_LINT
     - DOCKER_IMAGE='arm32v7/ros:melodic-ros-core' INJECT_QEMU=arm BEFORE_INIT='[[ $(uname -p) == armv7l ]]'
-    - ROS_DISTRO=melodic ROS_REPO=ros NOT_TEST_BUILD='true' NOT_TEST_INSTALL='true' POST_PROCESS='I_am_supposed_to_fail'
 
+    # test failing prerelease
     - ROS_DISTRO=melodic PRERELEASE=true TARGET_WORKSPACE='industrial_ci/tests/failing_test' PRERELEASE_REPONAME="failing_test" EXPECT_EXIT_CODE=1
 
     # test CCACHE_DIR
@@ -92,8 +92,6 @@ env:
     - ROS_DISTRO=melodic TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/WebKit' CLANG_FORMAT_CHECK='file'
     - ROS_DISTRO=melodic TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/LLVM' CLANG_FORMAT_CHECK='WebKit' EXPECT_EXIT_CODE=1
 matrix:
-  allow_failures:
-    - env: ROS_DISTRO=indigo NOT_TEST_BUILD='true' NOT_TEST_INSTALL='true' POST_PROCESS='I_am_supposed_to_fail'
   include:
     - script: shellcheck -x *.sh industrial_ci/scripts/*_ci industrial_ci/src/*.sh industrial_ci/src/*/*.sh industrial_ci/tests/*.sh
       env: [shellcheck]

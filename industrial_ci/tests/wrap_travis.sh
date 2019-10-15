@@ -19,6 +19,8 @@
 
 set -e # exit script on errors
 
+DIR_THIS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 if [ -n "$_EXTERNAL_REPO" ]; then
     export TRAVIS_BUILD_DIR; TRAVIS_BUILD_DIR=$(mktemp -d)
     source ./industrial_ci/src/workspace.sh
@@ -32,4 +34,4 @@ if [ -n "$_EXTERNAL_REPO" ]; then
     export TRAVIS_REPO_SLUG="${urldirname##*/}/${urlbasename%.git}"
 fi
 
-./travis.sh
+"$DIR_THIS/../../travis.sh"

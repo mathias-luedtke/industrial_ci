@@ -261,7 +261,6 @@ function ici_generate_default_dockerfile() {
   cat <<EOF
 FROM $DOCKER_BASE_IMAGE
 
-ENV ROS_DISTRO $ROS_DISTRO
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 
@@ -274,5 +273,7 @@ RUN for i in 1 2 3; do { $keycmd; } &&  break || sleep 1; done
 RUN echo "deb ${ROS_REPOSITORY_PATH} \$(lsb_release -sc) main" > /etc/apt/sources.list.d/ros${ROS_VERSION}-latest.list
 
 RUN sed -i "/^# deb.*multiverse/ s/^# //" /etc/apt/sources.list  && apt-get update -qq
+
+ENV ROS_DISTRO $ROS_DISTRO
 EOF
 }

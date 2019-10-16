@@ -18,18 +18,15 @@ cache:
 env:
   matrix:
     # normal run for all supported distros
-    - _ROS_DISTROS='indigo jade' ROS_REPO=ros
-    - _ROS_DISTROS='kinetic lunar' ROS_REPO=ros
+    - _ROS_DISTROS='indigo jade kinetic lunar' ROS_REPO=ros
     - ROS_DISTRO=ardent  ROS_REPO=ros AFTER_SETUP_TARGET_WORKSPACE='sed -i -e "/!= 2/d" -e "s/ condition=\"\$ROS_VERSION == 2\"//g" $target_ws/src/industrial_ci/industrial_ci/package.xml'
     - _ROS_DISTROS='melodic bouncy crystal dashing' ROS_REPO=ros
 
     # testing run for non-EOL distros
-    - ROS_DISTRO=kinetic ROS_REPO=testing
+    - _ROS_DISTROS='kinetic melodic crystal dashing' ROS_REPO=testing
 
-    - _ROS_DISTROS='melodic crystal dashing' ROS_REPO=testing
     # prerelease run for non-EOL distros
-    - ROS_DISTRO=kinetic PRERELEASE=true
-    - _ROS_DISTROS='melodic crystal dashing' PRERELEASE=true
+    - _ROS_DISTROS='kinetic melodic crystal dashing' PRERELEASE=true
 
     # test CMAKE_ARGS
     - ROS_DISTRO=melodic ROS_REPO=ros TARGET_WORKSPACE='industrial_ci/tests/industrial_ci_testpkg' CMAKE_ARGS="-DFAIL_CMAKE=true" EXPECT_EXIT_CODE=1
@@ -73,20 +70,20 @@ env:
 
     # test ABICHECK_URL
     - ROS_DISTRO=indigo _EXTERNAL_REPO='github:ros/actionlib#38ce66e2ae2ec9c19cf12ab22d57a8134a9285be' ROS_REPO=ros ABICHECK_URL=url ABICHECK_MERGE=true # actual URL will not be used in the case
-    - ROS_DISTRO=kinetic _EXTERNAL_REPO='github:ros-industrial/ros_canopen#0.7.5' ROS_REPO=ros ABICHECK_URL='github:ros-industrial/ros_canopen#0.7.1' ABICHECK_MERGE=false EXPECT_EXIT_CODE=1
-    - ROS_DISTRO=kinetic _EXTERNAL_REPO='github:ros-industrial/ros_canopen#0.7.6' ABICHECK_URL='github:ros-industrial/ros_canopen#0.7.5' ABICHECK_MERGE=false
+    - ROS_DISTRO=kinetic ROS_REPO=ros _EXTERNAL_REPO='github:ros-industrial/ros_canopen#0.7.5' ROS_REPO=ros ABICHECK_URL='github:ros-industrial/ros_canopen#0.7.1' ABICHECK_MERGE=false EXPECT_EXIT_CODE=1
+    - ROS_DISTRO=kinetic ROS_REPO=ros _EXTERNAL_REPO='github:ros-industrial/ros_canopen#0.7.6' ABICHECK_URL='github:ros-industrial/ros_canopen#0.7.5' ABICHECK_MERGE=false
 
-    # test CLANG_FORMAT_CHECK
-    - ROS_DISTRO=indigo TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/LLVM' CLANG_FORMAT_CHECK='LLVM' CLANG_FORMAT_VERSION=3.8
-    - ROS_DISTRO=melodic TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/LLVM' CLANG_FORMAT_CHECK='LLVM'
-    - ROS_DISTRO=melodic TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/WebKit' CLANG_FORMAT_CHECK='LLVM' EXPECT_EXIT_CODE=1
-    - ROS_DISTRO=melodic TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/WebKit' CLANG_FORMAT_CHECK='file'
-    - ROS_DISTRO=melodic TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/LLVM' CLANG_FORMAT_CHECK='WebKit' EXPECT_EXIT_CODE=1
 matrix:
   include:
-    - script: shellcheck -x *.sh industrial_ci/scripts/*_ci industrial_ci/src/*.sh industrial_ci/src/*/*.sh industrial_ci/tests/*.sh
-      env: [shellcheck]
-
+    - env: [shellcheck]
+      script: shellcheck -x *.sh industrial_ci/scripts/*_ci industrial_ci/src/*.sh industrial_ci/src/*/*.sh industrial_ci/tests/*.sh
+    - env: [CLANG_FORMAT_CHECK]
+      script:
+        - ./travis.sh ROS_REPO=ros ROS_DISTRO=indigo TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/LLVM' CLANG_FORMAT_CHECK='LLVM' CLANG_FORMAT_VERSION=3.8
+        - ./travis.sh ROS_REPO=ros ROS_DISTRO=melodic TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/LLVM' CLANG_FORMAT_CHECK='LLVM'
+        - ./travis.sh ROS_REPO=ros ROS_DISTRO=melodic TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/WebKit' CLANG_FORMAT_CHECK='LLVM' EXPECT_EXIT_CODE=1
+        - ./travis.sh ROS_REPO=ros ROS_DISTRO=melodic TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/WebKit' CLANG_FORMAT_CHECK='file'
+        - ./travis.sh ROS_REPO=ros ROS_DISTRO=melodic TARGET_WORKSPACE='industrial_ci/tests/format_tests/cpp/LLVM' CLANG_FORMAT_CHECK='WebKit' EXPECT_EXIT_CODE=1
 
 install:
   - if [ -n "$INJECT_QEMU" ]; then sudo apt-get install qemu-user-static; fi

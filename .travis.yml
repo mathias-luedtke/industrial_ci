@@ -13,8 +13,8 @@ git:
 
 env:
   matrix:
-  - ROS_DISTRO=kinetic DOCKER_BASE_IMAGE=arm64v8/ros:kinetic-perception INJECT_QEMU=aarch64
-  - ROS_DISTRO=kinetic DOCKER_IMAGE=arm64v8/ros:kinetic-perception INJECT_QEMU=aarch64
+  - ROS_DISTRO=kinetic DOCKER_BASE_IMAGE=arm64v8/ros:kinetic-perception
+  - ROS_DISTRO=kinetic DOCKER_IMAGE=arm64v8/ros:kinetic-perception
 
 install:
   - sudo apt-get install qemu-user-static

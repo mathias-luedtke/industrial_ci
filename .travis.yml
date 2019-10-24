@@ -17,7 +17,7 @@ env:
   - ROS_DISTRO=kinetic DOCKER_IMAGE=arm64v8/ros:kinetic-perception
 
 install:
-  - sudo apt-get install qemu-user-static
+  - sudo apt-get install qemu-user-static qemu
   - docker run --rm --privileged multiarch/qemu-user-static:register --reset
   - docker run --rm --privileged hypriot/qemu-register
   - cat /proc/sys/fs/binfmt_misc/qemu-aarch64

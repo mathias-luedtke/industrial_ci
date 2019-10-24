@@ -12,8 +12,6 @@ git:
   quiet: true
 
 env:
-  global: # global settings for all jobs
-    - DOCKER_PULL=false
   matrix:
   - ROS_DISTRO=kinetic DOCKER_BASE_IMAGE=arm64v8/ros:kinetic-perception INJECT_QEMU=aarch64
   - ROS_DISTRO=kinetic DOCKER_IMAGE=arm64v8/ros:kinetic-perception INJECT_QEMU=aarch64

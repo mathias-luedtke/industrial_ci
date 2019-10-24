@@ -18,7 +18,8 @@ env:
 
 install:
   - sudo apt-get install qemu-user-static
-  - docker run --rm --privileged multiarch/qemu-user-static --debian
+  - docker run --rm --privileged multiarch/qemu-user-static:register --reset
+  - docker run --rm --privileged multiarch/qemu-user-static:register
   - cat /proc/sys/fs/binfmt_misc/qemu-aarch64
   - cat /proc/sys/fs/binfmt_misc/qemu-arm
 script:

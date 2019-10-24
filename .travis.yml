@@ -15,11 +15,10 @@ env:
   matrix:
   - ROS_DISTRO=kinetic DOCKER_BASE_IMAGE=arm64v8/ros:kinetic-perception INJECT_QEMU=aarch64
   - ROS_DISTRO=kinetic DOCKER_IMAGE=arm64v8/ros:kinetic-perception INJECT_QEMU=aarch64
-  - ROS_DISTRO=kinetic DOCKER_IMAGE=arm32v7/ros:kinetic-perception INJECT_QEMU=arm
-  - ROS_DISTRO=kinetic DOCKER_BASE_IMAGE=arm32v7/ros:kinetic-perception INJECT_QEMU=arm
 
 install:
   - sudo apt-get install qemu-user-static
+  - docker run --rm --privileged multiarch/qemu-user-static
   - cat /proc/sys/fs/binfmt_misc/qemu-aarch64
   - cat /proc/sys/fs/binfmt_misc/qemu-arm
 script:

@@ -20,15 +20,39 @@
 ## util.sh
 ## This is a script where the functions commonly used within the industrial_ci repo are defined.
 
-ANSI_RED=31
-ANSI_GREEN=32
-ANSI_YELLOW=33
-ANSI_BLUE=34
+export ANSI_RED="\033[31m"
+export ANSI_GREEN="\033[32m"
+export ANSI_YELLOW="\033[33m"
+export ANSI_BLUE="\033[34m"
+
+export ANSI_THIN="\033[22m"
+export ANSI_BOLD="\033[1m"
+
+export ANSI_RESET="\033[0m"
+export ANSI_CLEAR="\033[0K"
+
+# usage: echo -e $(ici_colorize RED Some ${fancy} text.)
+function ici_colorize() {
+   local color reset
+   while true ; do
+      case "${1:-}" in
+         RED|GREEN|YELLOW|BLUE)
+            color="ANSI_$1"; eval "color=\$$color"; reset="${ANSI_RESET}" ;;
+         THIN)
+            color="${color:-}${ANSI_THIN}" ;;
+         BOLD)
+            color="${color:-}${ANSI_BOLD}"; reset="${reset:-${ANSI_THIN}}" ;;
+         *) break ;;
+      esac
+      shift
+   done
+   echo -e "${color:-}$*${reset:-}"
+}
 
 function ici_color_output {
   local c=$1
   shift
-  echo -e "\e[${c}m$*\e[0m"
+  echo -e "$c$*${ANSI_RESET}"
 }
 
 function ici_source_setup {
@@ -80,18 +104,55 @@ function ici_hook() {
 }
 
 #######################################
+# ici_fold (start|end) [name] [message]
+# based on https://github.com/travis-ci/travis-build/blob/master/lib/travis/build/bash/travis_fold.bash
+#######################################
+ici_fold() {
+  # option -g declares those arrays globally!
+  declare -ag _ICI_FOLD_NAME_STACK  # "stack" array to hold name hierarchy
+  declare -Ag _ICI_FOLD_COUNTERS    # associated array to hold global counters
+
+  local action="$1"
+  local name="${2:-ici}"
+  name="${name/ /.}"  # replace spaces with dots in name
+  local message="${3:-}"
+  test -n "$message" && message="$(ici_colorize BLUE BOLD $3)\\n"  # print message in bold blue by default
+
+  local old_ustatus=${-//[^u]/}
+  set +u  # disable checking for unbound variables for the next line
+  local length=${#_ICI_FOLD_NAME_STACK[@]}
+  test -n "$old_ustatus" && set -u  # restore variable checking option
+
+  if [ "$action" == "start" ] ; then
+    ICI_FOLD_NAME=$name
+    # push name to stack
+    _ICI_FOLD_NAME_STACK[$length]=$name
+    # increment (or initialize) matching counter
+    _ICI_FOLD_COUNTERS[$name]=$((${_ICI_FOLD_COUNTERS[$name]:=0} + 1))
+  else
+    action="end"
+    message=""  # only start action may have a message
+    # pop name from stack
+    length=$(($length - 1))
+    test $length -lt 0 && ici_error "Missing ici_fold start before ici_fold end $name"
+    test "${_ICI_FOLD_NAME_STACK[$length]}" != "$name" && \
+      ici_error "'ici_fold end $name' not matching to previous ici_fold start ${_ICI_FOLD_NAME_STACK[$length]}"
+    unset '_ICI_FOLD_NAME_STACK[$length]'
+    length=$(($length - 1))
+    # set ICI_FOLD_NAME to previous value on stack (or None)
+    test $length -ge 0 && ICI_FOLD_NAME=${_ICI_FOLD_NAME_STACK[$length]} || unset ICI_FOLD_NAME
+  fi
+  # actually generate the fold tag for travis
+  echo -en "ici_fold:${action}:${name}.${_ICI_FOLD_COUNTERS[$name]}\\r${ANSI_CLEAR}${message}"
+}
+
+#######################################
 # Starts a timer section on Travis CI
 # based on https://github.com/travis-ci/travis-build/blob/master/lib/travis/build/bash/travis_time_start.bash
-#      and https://github.com/travis-ci/travis-build/blob/master/lib/travis/build/bash/travis_fold.bash
 #
 # Globals:
-#   DEBUG_BASH (read-only)
-#   ICI_FOLD_NAME (write-only)
 #   ICI_TIME_ID (write-only)
 #   ICI_START_TIME (write-only)
-# Arguments:
-#   color_wrap (default: 32): Color code for the section delimitter text.
-#   exit_code (default: $?): Exit code for display
 # Returns:
 #   (None)
 #######################################
@@ -101,17 +162,10 @@ function ici_time_start {
     if [ "$DEBUG_BASH" ] && [ "$DEBUG_BASH" == true ]; then set +x; fi
     ICI_START_TIME=$(date -u +%s%N)
     ICI_TIME_ID="$(printf %08x $((RANDOM * RANDOM)))"
-    ICI_FOLD_NAME=$1
 
-    echo # blank line
-
-    if [ "$_DO_NOT_FOLD" != "true" ]; then
-        echo -e "ici_fold:start:$ICI_FOLD_NAME"
-        echo -en "ici_time:start:$ICI_TIME_ID"
-    fi
-
-    ici_color_output $ANSI_BLUE ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    ici_color_output $ANSI_BLUE "Starting function '$ICI_FOLD_NAME'"
+    ici_fold start "$1"
+    echo -en "ici_time:start:$ICI_TIME_ID\\r${ANSI_CLEAR}"
+    ici_color_output "${ANSI_BLUE}${ANSI_BOLD}" "Running $ICI_FOLD_NAME"
     if [ "$DEBUG_BASH" ] && [ "$DEBUG_BASH" == true ]; then set -x; fi
 }
 
@@ -133,30 +187,26 @@ function ici_time_start {
 function ici_time_end {
     if [ "$DEBUG_BASH" ] && [ "$DEBUG_BASH" == true ]; then set +x; fi
     local color_wrap=${1:-${ANSI_GREEN}}
-    local exit_code=${2:-$?}
+    local exit_code=${2:-$?}  # BUG: the default $? will reflect the error code of the if statement above!
     local name=$ICI_FOLD_NAME
 
     if [ -z "$ICI_START_TIME" ]; then ici_warn "[ici_time_end] var ICI_START_TIME is not set. You need to call ici_time_start in advance. Returning."; return; fi
     local end_time; end_time=$(date -u +%s%N)
     local elapsed_seconds; elapsed_seconds=$(( (end_time - ICI_START_TIME)/1000000000 ))
-    if [ "$_DO_NOT_FOLD" != "true" ]; then
-        echo -e "ici_time:end:$ICI_TIME_ID:start=$ICI_START_TIME,finish=$end_time,duration=$((end_time - ICI_START_TIME))"
-        echo -en "ici_fold:end:$name"
-    fi
-    ici_color_output "$color_wrap" "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-    ici_color_output "$color_wrap" "Function '$name' returned with code '${exit_code}' after $(( elapsed_seconds / 60 )) min $(( elapsed_seconds % 60 )) sec"
 
-    unset ICI_FOLD_NAME
+    ici_color_output "$color_wrap" "Function '$name' returned with code '${exit_code}' after $(( elapsed_seconds / 60 )) min $(( elapsed_seconds % 60 )) sec"
+    echo -en "ici_time:end:$ICI_TIME_ID:start=$ICI_START_TIME,finish=$end_time,duration=$((end_time - ICI_START_TIME))\\r"
+    ici_fold end $name
+
     if [ "$DEBUG_BASH" ] && [ "$DEBUG_BASH" == true ]; then set -x; fi
     ici_hook "after_${name}"
-
 }
 
 function ici_run {
     local name=$1; shift
-    ici_time_start "$name"
+    ici_time_start $name
     "$@"
-    ici_time_end
+    ici_time_end ${ANSI_RESET} $?
 }
 
 #######################################
@@ -164,7 +214,6 @@ function ici_run {
 #
 # Globals:
 #   EXPECT_EXIT_CODE (read-only)
-#   ICI_FOLD_NAME (from ici_time_start, read-only)
 # Arguments:
 #   exit_code (default: $?)
 # Returns:

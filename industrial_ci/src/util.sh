@@ -56,14 +56,11 @@ function ici_color_output {
 }
 
 function ici_source_setup {
-  local u_set=1
-  [[ $- =~ u ]] || u_set=0
-  set +u
+  local old_u_status=${-//[^u]/}
+  set +u  # disable checking for unbound variables
   # shellcheck disable=SC1090
   source "$1/setup.bash"
-  if [ $u_set ]; then
-    set -u
-  fi
+  test -n "$old_u_status" && set -u  # restore variable checking option
 }
 
 function rosenv() {
@@ -88,16 +85,20 @@ function ici_with_ws() {
 }
 
 function _sub_shell() (
-  set -u
+  local old_u_status=${-//[^u]/}
+  set -u  # enable variable checking
   eval "$@"
-  set +u
+  test -z "$old_u_status" && set +u  # restore variable checking option
 )
 
 function ici_hook() {
   local name=${1^^}
   name=${name//[^A-Z0-9_]/_}
 
+  local old_u_status=${-//[^u]/}
+  set +u  # disable checking for unbound variables
   local script=${!name}
+  test -n "$old_u_status" && set -u  # restore variable checking option
   if [ -n "$script" ]; then
     ici_run "$1" _sub_shell "$script"
   fi
@@ -237,12 +238,15 @@ function ici_warn {
 }
 
 function ici_mark_deprecated {
-  if ! [ "$IN_DOCKER" ]; then
+  if ! [ "${IN_DOCKER:-}" ]; then
     local e=$1
     shift
+    local old_u_status=${-//[^u]/}
+    set +u  # disable checking for unbound variables
     if [ "${!e}" ]; then
       ici_warn "'$e' is deprecated. $*"
     fi
+    test -n "$old_u_status" && set -u  # restore variable checking option
   fi
 }
 
@@ -275,9 +279,12 @@ function ici_error {
 function ici_enforce_deprecated {
     local e=$1
     shift
+    local old_u_status=${-//[^u]/}
+    set +u  # disable checking for unbound variables
     if [ "${!e}" ]; then
       ici_error "'$e' is not used anymore. $*"
     fi
+    test -n "$old_u_status" && set -u  # restore variable checking option
 }
 
 function ici_retry {
@@ -314,5 +321,8 @@ function ici_split_array {
 
 function ici_parse_env_array {
     # shellcheck disable=SC2034
+    local old_u_status=${-//[^u]/}
+    set +u  # disable checking for unbound variables
     eval "$1=(${!2})"
+    test -n "$old_u_status" && set -u  # restore variable checking option
 }

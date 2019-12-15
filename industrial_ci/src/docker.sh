@@ -33,7 +33,7 @@
 #   (None)
 #######################################
 function ici_require_run_in_docker() {
-  if ! [ "$IN_DOCKER" ]; then
+  if ! [ "${IN_DOCKER:-}" ]; then
     ici_prepare_docker_image
 
     local docker_target_repo_path=/root/src/$TARGET_REPO_NAME

@@ -92,6 +92,7 @@ function use_repo_or_final_snapshot() {
     fi
 }
 function set_ros_variables {
+    ROS_VERSION_EOL=false
     case "$ROS_DISTRO" in
     "indigo"|"jade")
         ros1_defaults "trusty"

@@ -13,8 +13,8 @@ git:
 
 env:
   matrix:
-    - ROS_DISTRO=melodic NOT_TEST_DOWNSTREAM=true BUILDER=colcon _EXTERNAL_REPO='github:ros-controls/ros_control#melodic-devel' UPSTREAM_WORKSPACE="github:ros-controls/control_msgs#kinetic-devel github:ros-controls/realtime_tools#melodic-devel github:ros-controls/control_toolbox#melodic-devel" DOWNSTREAM_WORKSPACE="github:ros-controls/ros_controllers#melodic-devel"
-    - ROS_DISTRO=melodic NOT_TEST_DOWNSTREAM=true BUILDER=colcon PARALLEL_TESTS=true _EXTERNAL_REPO='github:ros-controls/ros_control#melodic-devel' UPSTREAM_WORKSPACE="github:ros-controls/control_msgs#kinetic-devel github:ros-controls/realtime_tools#melodic-devel github:ros-controls/control_toolbox#melodic-devel" DOWNSTREAM_WORKSPACE="github:ros-controls/ros_controllers#melodic-devel"
-    - ROS_DISTRO=melodic NOT_TEST_DOWNSTREAM=true _EXTERNAL_REPO='github:ros-controls/ros_control#melodic-devel' UPSTREAM_WORKSPACE="github:ros-controls/control_msgs#kinetic-devel github:ros-controls/realtime_tools#melodic-devel github:ros-controls/control_toolbox#melodic-devel" DOWNSTREAM_WORKSPACE="github:ros-controls/ros_controllers#melodic-devel"
+    - ROS_DISTRO=melodic NOT_TEST_DOWNSTREAM=true BUILDER=colcon _EXTERNAL_REPO='github:matthew-reynolds/ros_control#tests-target' UPSTREAM_WORKSPACE="github:ros-controls/control_msgs#kinetic-devel github:ros-controls/realtime_tools#melodic-devel github:ros-controls/control_toolbox#melodic-devel" DOWNSTREAM_WORKSPACE="github:ros-controls/ros_controllers#melodic-devel"
+    - ROS_DISTRO=melodic NOT_TEST_DOWNSTREAM=true BUILDER=colcon PARALLEL_TESTS=true _EXTERNAL_REPO='github:matthew-reynolds/ros_control#tests-target' UPSTREAM_WORKSPACE="github:ros-controls/control_msgs#kinetic-devel github:ros-controls/realtime_tools#melodic-devel github:ros-controls/control_toolbox#melodic-devel" DOWNSTREAM_WORKSPACE="github:ros-controls/ros_controllers#melodic-devel"
+    - ROS_DISTRO=melodic NOT_TEST_DOWNSTREAM=true _EXTERNAL_REPO='github:matthew-reynolds/ros_control#tests-target' UPSTREAM_WORKSPACE="github:ros-controls/control_msgs#kinetic-devel github:ros-controls/realtime_tools#melodic-devel github:ros-controls/control_toolbox#melodic-devel" DOWNSTREAM_WORKSPACE="github:ros-controls/ros_controllers#melodic-devel"
 script:
   - industrial_ci/_wrap_test.sh # this script is only for internal use

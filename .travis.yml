@@ -14,7 +14,7 @@ git:
 env:
   matrix:
     - ROS_DISTRO=kinetic _EXTERNAL_REPO='github:ros-controls/ros_control#kinetic-devel' UPSTREAM_WORKSPACE="ros_control.rosinstall -ros_control -ros_controllers" VERBOSE_TESTS=true
+    - ROS_DISTRO=kinetic _EXTERNAL_REPO='github:ros-controls/ros_control#kinetic-devel' UPSTREAM_WORKSPACE="ros_control.rosinstall -ros_control -ros_controllers"
 
 script:
-  - industrial_ci/_wrap_test.sh # this script is only for internal use
-  - if ! [ -z "$POST_PROCESS" ]; then $POST_PROCESS; fi
+  - for i in {1..6}; do industrial_ci/_wrap_test.sh || exit $?; done

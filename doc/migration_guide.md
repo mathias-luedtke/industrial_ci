@@ -243,8 +243,8 @@ Specify `PARALLEL_TESTS=true` to remove this limit.
 ### ROS_REPOSITORY_PATH
 
 This variable is supported as-is.
-If it is set to `http://packages.ros.org/ros-shadow-fixed/ubuntu` or `http://packages.ros.org/ros-testing/ubuntu`,  it can be removed completely or replaced by `ROS_REPO=ros-testing` (default).
-If it is set to `http://packages.ros.org/ros/ubuntu`, it could get shortened to `ROS_REPO=ros` to make `industrial_ci` use the [official ROS Docker](https://hub.docker.com/_/ros) images, if possible.
+If it is set to `http://packages.ros.org/ros-shadow-fixed/ubuntu` or `http://packages.ros.org/ros-testing/ubuntu`,  it can be removed completely or replaced by `ROS_REPO=testing` (default).
+If it is set to `http://packages.ros.org/ros/ubuntu`, it could get shortened to `ROS_REPO=main` to make `industrial_ci` use the [official ROS Docker](https://hub.docker.com/_/ros) images, if possible.
 
 ### TARGET_PKGS
 

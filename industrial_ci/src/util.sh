@@ -183,8 +183,12 @@ function ici_exit {
     if [ "$exit_code" == "${EXPECT_EXIT_CODE:-0}" ]; then
         exit 0
     elif [ "$exit_code" == "0" ]; then # 0 was not expected
-        exit 1
+        exit_code=1
     fi
+
+    ici_warn WARNING: industrial_ci switched the default branch back to master.
+    ici_warn More information: https://discourse.ros.org/t/industrial-ci-rollout-of-version-0-10-0-with-ros2-github-actions-support/13582
+    ici_warn For the legacy version, please use "git clone --quiet --depth 1 https://github.com/ros-industrial/industrial_ci.git .industrial_ci -b legacy"
 
     exit "$exit_code"
 }

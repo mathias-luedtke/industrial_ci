@@ -25,7 +25,10 @@ export TARGET_REPO_NAME=${GITHUB_REPOSITORY##*/}
 export PYTHONUNBUFFERED=${PYTHONUNBUFFERED:1}
 export _FOLDING_TYPE=github_actions
 
-jq -r 'keys[] as $k | "export \($k)=\(.[$k])"' <<< "$INPUT_MATRIX"
-
+if [ -n "$INPUT_MATRIX" ]; then
+    vars=$(jq -r 'keys[] as $k | "export \($k)=\(.[$k])"' <<< "$INPUT_MATRIX"  | grep "^export [A-Z][A-Z_]*=")
+    echo "$vars"
+    eval "$vars"
+fi    
 
 env "$@" bash "$DIR_THIS/../industrial_ci/src/ci_main.sh"

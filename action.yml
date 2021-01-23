@@ -6,9 +6,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - run: env
-      shell: bash
-    - run: 'echo "INPUT_MATRIX: $INPUT_MATRIX"'
-      shell: bash
     - run: ${{ github.action_path }}/.github/action.sh
       shell: bash
+      env:
+        INPUT_MATRIX: ${{ inputs.matrix }}

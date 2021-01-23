@@ -78,7 +78,7 @@ jobs:
       - uses: './'
         env: ${{matrix.env}}
         with:
-          matrix: ${{toJSON(matrix)}}
+          matrix: ${{toJSON(matrix.env)}}
   abicheck:
     strategy:
       matrix:

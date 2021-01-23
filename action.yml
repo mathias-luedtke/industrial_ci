@@ -1,6 +1,11 @@
 name: 'ROS industrial_ci'
+inputs:
+  matrix:
+    description: 'Matrix'
 runs:
   using: "composite"
   steps:
+    - run: env
+      shell: bash
     - run: ${{ github.action_path }}/.github/action.sh
       shell: bash

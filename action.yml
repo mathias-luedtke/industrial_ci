@@ -2,6 +2,7 @@ name: 'ROS industrial_ci'
 inputs:
   matrix:
     description: 'Matrix'
+    required: false
 runs:
   using: "composite"
   steps:

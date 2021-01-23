@@ -26,7 +26,7 @@ export PYTHONUNBUFFERED=${PYTHONUNBUFFERED:1}
 export _FOLDING_TYPE=github_actions
 
 if [ -n "$INPUT_MATRIX" ]; then
-    vars=$(jq -r 'keys[] as $k | "export \($k)=\(.[$k])"' <<< "$INPUT_MATRIX"  | grep "^export [A-Z][A-Z_]*=")
+    vars=$(jq -r 'keys[] as $k | "export \($k)=\(.[$k]|tojson)"' <<< "$INPUT_MATRIX"  | grep "^export [A-Z][A-Z_]*=")
     echo "$vars"
     eval "$vars"
 fi    

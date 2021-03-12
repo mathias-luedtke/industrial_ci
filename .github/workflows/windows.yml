@@ -1,0 +1,13 @@
+name: Windows
+on:
+  push:
+  pull_request:
+
+jobs:
+  industrial_ci:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: './'
+        env:
+          ROS_DISTRO: foxy

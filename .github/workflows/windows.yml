@@ -11,3 +11,5 @@ jobs:
       - uses: './'
         env:
           ROS_DISTRO: foxy
+          OS_NAME: windows
+          OS_CODE_NAME: 10.0.17763.1757

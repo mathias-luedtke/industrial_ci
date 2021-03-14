@@ -6,7 +6,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - run: echo "$GITHUB_ACTION_PATH" && find "$GITHUB_ACTION_PATH"
+    - run: $GITHUB_ACTION_PATH/.github/action.sh
       shell: bash
       env:
         INPUT_CONFIG: ${{ inputs.config }}

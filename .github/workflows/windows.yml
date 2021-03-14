@@ -14,3 +14,4 @@ jobs:
           OS_NAME: windows
           OS_CODE_NAME: 10.0.17763.1757
           DOCKER_IMAGE: "mcr.microsoft.com/windows:10.0.17763.1757"
+          ISOLATION: shell

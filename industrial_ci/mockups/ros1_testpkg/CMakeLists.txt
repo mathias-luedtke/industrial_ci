@@ -3,7 +3,7 @@ if(POLICY CMP0048)
     cmake_policy(SET CMP0048 NEW)
 endif()
 
-project(industrial_ci_testpkg)
+project(ros1_testpkg)
 
 if(FAIL_CMAKE)
   message(FATAL_ERROR "CMake was requested to fail")

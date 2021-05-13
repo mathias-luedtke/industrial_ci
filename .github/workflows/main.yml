@@ -132,6 +132,36 @@ jobs:
         with:
           config: ${{toJSON(matrix)}}
 
+  prerelease_ros1:
+    strategy:
+      matrix:
+        ROS_DISTRO: [ kinetic, melodic, noetic ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: './'
+        with:
+          config: ${{toJSON(matrix)}}
+        env:
+          PRERELEASE: true
+          PRERELEASE_REPONAME: ros1_testpkg
+          TARGET_WORKSPACE: industrial_ci/mockups/ros1_testpkg
+
+  prerelease_ros2:
+    strategy:
+      matrix:
+        ROS_DISTRO: [ dashing, foxy, galactic, rolling ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: './'
+        with:
+          config: ${{toJSON(matrix)}}
+        env:
+          PRERELEASE: true
+          PRERELEASE_REPONAME: ros2_testpkg
+          TARGET_WORKSPACE: industrial_ci/mockups/ros2_testpkg
+
   isolated:
     env:
       ISOLATION: shell

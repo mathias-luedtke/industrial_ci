@@ -119,6 +119,35 @@ jobs:
       - uses: './.industrial_ci/'
         env: ${{matrix.env}}
 
+  eol:
+    strategy:
+      matrix:
+        ROS_DISTRO: [ lunar, bouncy, crystal, eloquent ]
+        include:
+          - {ROS_DISTRO: indigo, TARGET_WORKSPACE: industrial_ci/mockups/industrial_ci_testpkg}
+          - {ROS_DISTRO: jade, TARGET_WORKSPACE: industrial_ci/mockups/industrial_ci_testpkg}
+          - {ROS_DISTRO: ardent, TARGET_WORKSPACE: industrial_ci/mockups/ros2_testpkg}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: './'
+        with:
+          config: ${{toJSON(matrix)}}
+
+  active:
+    strategy:
+      matrix:
+        ROS_DISTRO: [ kinetic, melodic, noetic, dashing, foxy, galactic, rolling ]
+        ROS_REPO: [ main, testing ]
+        exclude:
+          - {ROS_DISTRO: galactic, ROS_REPO: main}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: './'
+        with:
+          config: ${{toJSON(matrix)}}
+
   isolated:
     env:
       ISOLATION: shell

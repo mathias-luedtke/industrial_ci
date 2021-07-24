@@ -21,7 +21,7 @@
 ## See ./README.rst for the detailed usage.
 
 set -e # exit script on errors
-[[ "${BASH_VERSINFO[0]}_${BASH_VERSINFO[1]}" < "4_4" ]] || set -u
+[[ "${BASH_VERSINFO[0]}_${BASH_VERSINFO[1]}" < "4_4" ]] || { set -u && shopt -s inherit_errexit; }
 
 export ICI_SRC_PATH; ICI_SRC_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"  # The path on CI service (e.g. Travis CI) to industrial_ci src dir.
  _CLEANUP=""

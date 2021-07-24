@@ -21,7 +21,7 @@
 ## See ./README.rst for the detailed usage.
 
 set -e # exit script on errors
-[[ "${BASH_VERSINFO[0]}_${BASH_VERSINFO[1]}" < "4_4" ]] || set -u
+[[ "${BASH_VERSINFO[0]}_${BASH_VERSINFO[1]}" < "4_4" ]] || { set -u && shopt -s inherit_errexit; }
 _CLEANUP=${_CLEANUP-}
 
 # shellcheck source=industrial_ci/src/env.sh

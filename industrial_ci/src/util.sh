@@ -97,12 +97,12 @@ function ici_hook() {
 
     if [ -n "$script" ]; then
       _label_hook "( $script; )"
-      _sub_shell "$script" || return
+      _sub_shell "$script" || ici_exit
     fi
 
     if [ -n "$script_embed" ]; then
       _label_hook "eval \"$script_embed\""
-      eval "$script_embed"
+      eval "$script_embed" || ici_exit
       ici_set_u
     fi
 

@@ -156,8 +156,10 @@ function ici_run_cmd_in_docker() {
   done
 
   trap '>/dev/null ici_label ici_quiet docker kill --signal=SIGTERM $cid && >/dev/null docker wait $cid' INT
+  ( trap '' INT &&  ici_label docker start -a "$cid" > >(sed 's/\r$//') ) &
   local ret=0
-  ici_label docker start -a "$cid" > >(sed 's/\r$//') || ret=$?
+  wait %% || ret=$?
+
   if [ -n "$DOCKER_COMMIT" ]; then
     local msg=()
     if [ -n "$DOCKER_COMMIT_MSG" ]; then

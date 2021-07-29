@@ -194,7 +194,7 @@ function run_source_tests {
         if [ "$CATKIN_LINT" == "pedantic" ]; then
           catkin_lint_args+=(--strict -W2)
         fi
-        ici_with_ws "$target_ws" ici_step "catkin_lint" ici_exec_in_workspace "$extend" "$target_ws"  catkin_lint --explain "${catkin_lint_args[@]}" src
+        ici_with_ws "$target_ws" ici_step "catkin_lint" ici_cmd ici_exec_in_workspace "$extend" "$target_ws" catkin_lint --explain "${catkin_lint_args[@]}" src
 
     fi
     if [ "${CLANG_TIDY:-false}" != false ]; then

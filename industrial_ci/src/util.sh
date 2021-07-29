@@ -215,10 +215,9 @@ function ici_step {
 #   (None)
 #######################################
 function ici_exit {
-    local exit_code=${1:-$?}  # If 1st arg is not passed, set last error code.
+    local last_exit_code=$?
+    local exit_code=${1:-$last_exit_code}
     trap - EXIT # Reset signal handler since the shell is about to exit.
-
-    ici_backtrace "$@"
 
     local cleanup=()
     # shellcheck disable=SC2016
@@ -235,9 +234,14 @@ function ici_exit {
         ici_time_end "$color_wrap" "$exit_code"
     fi
 
+    if [ "$exit_code" -eq 143 ]; then
+        ici_warn "industrial_ci terminated unexpectedly with exit code '$last_exit_code'"
+        TRACE=true ici_backtrace "$@"
+    else
+        ici_backtrace "$@"
+    fi
 
-
-    if [ "$exit_code" == "$EXPECT_EXIT_CODE" ]; then
+    if [ "$exit_code" == "$EXPECT_EXIT_CODE" ] ; then
         exit_code=0
     elif [ "$exit_code" == "0" ]; then # 0 was not expected
         exit_code=1

@@ -203,6 +203,12 @@ function ici_step {
     ici_time_end
 }
 
+function ici_exit_err {
+    ici_warn "industrial_ci terminated unexpectedly."
+    TRACE=true ici_backtrace "$@"
+    ici_exit "143"
+}
+
 #######################################
 # exit function with handling for EXPECT_EXIT_CODE, ends the current fold if necessary
 #

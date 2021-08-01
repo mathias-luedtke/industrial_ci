@@ -39,7 +39,7 @@ source "${ICI_SRC_PATH}/deprecated.sh"
 # shellcheck source=industrial_ci/src/ros.sh
 source "${ICI_SRC_PATH}/ros.sh"
 
-trap 'ici_exit 143' EXIT # install industrial_ci exit handler
+ici_setup
 
 export ISOLATION=${ISOLATION:-docker}
 if [ "${CI:-}" != true ] ; then

@@ -33,8 +33,14 @@ export ICI_FOLD_NAME=${ICI_FOLD_NAME:-}
 export ICI_START_TIME=${ICI_START_TIME:-}
 export ICI_TIME_ID=${ICI_TIME_ID:-}
 
-exec {__ici_log_fd}>&1
-exec {__ici_err_fd}>&2
+__ici_log_fd=1
+__ici_err_fd=2
+
+function ici_setup {
+    trap 'ici_trap_exit' EXIT # install industrial_ci exit handler
+    exec {__ici_log_fd}>&1
+    exec {__ici_err_fd}>&2
+}
 
 function ici_redirect {
     1>&"$__ici_log_fd" 2>&"$__ici_err_fd" "$@"
@@ -203,20 +209,8 @@ function ici_step {
     ici_time_end
 }
 
-#######################################
-# exit function with handling for EXPECT_EXIT_CODE, ends the current fold if necessary
-#
-# Globals:
-#   EXPECT_EXIT_CODE (read-only)
-#   ICI_FOLD_NAME (from ici_time_start, read-only)
-# Arguments:
-#   exit_code (default: $?)
-# Returns:
-#   (None)
-#######################################
-function ici_exit {
-    local last_exit_code=$?
-    local exit_code=${1:-$last_exit_code}
+function ici_teardown {
+    local exit_code=$1
     trap - EXIT # Reset signal handler since the shell is about to exit.
 
     local cleanup=()
@@ -234,12 +228,37 @@ function ici_exit {
         ici_time_end "$color_wrap" "$exit_code"
     fi
 
-    if [ "$exit_code" -eq 143 ]; then
-        ici_warn "industrial_ci terminated unexpectedly with exit code '$last_exit_code'"
-        TRACE=true ici_backtrace "$@"
-    else
-        ici_backtrace "$@"
-    fi
+    exec {__ici_log_fd}>&-
+    exec {__ici_err_fd}>&-
+}
+
+function ici_trap_exit {
+    local exit_code=${1:-$?}
+
+    ici_warn "industrial_ci terminated unexpectedly with exit code '$exit_code'"
+    TRACE=true ici_backtrace "$@"
+
+    ici_teardown "$exit_code"
+
+    exit "$exit_code"
+}
+
+#######################################
+# exit function with handling for EXPECT_EXIT_CODE, ends the current fold if necessary
+#
+# Globals:
+#   EXPECT_EXIT_CODE (read-only)
+#   ICI_FOLD_NAME (from ici_time_start, read-only)
+# Arguments:
+#   exit_code (default: $?)
+# Returns:
+#   (None)
+#######################################
+function ici_exit {
+    local exit_code=${1:-$?}
+    ici_backtrace "$@"
+
+    ici_teardown "$exit_code"
 
     if [ "$exit_code" == "$EXPECT_EXIT_CODE" ] ; then
         exit_code=0
@@ -247,8 +266,6 @@ function ici_exit {
         exit_code=1
     fi
 
-    exec {__ici_log_fd}>&-
-    exec {__ici_err_fd}>&-
     exit "$exit_code"
 }
 

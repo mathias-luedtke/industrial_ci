@@ -60,6 +60,7 @@ function build_debian() (
     use_repo "$repo"
 
     ici_guard cd "$pkg_path"
+    export DEB_BUILD_OPTIONS=nocheck
     ici_cmd ici_filter "Setting up" ici_asroot apt-get build-dep -y -qq .
     ici_cmd ici_quiet dpkg-buildpackage -b -uc -us
     ici_guard mv ../*.deb "$repo"

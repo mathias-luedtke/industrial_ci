@@ -72,7 +72,7 @@ function isolate_build_debian() (
     for hook in $(env | grep -o '^\(BEFORE\|AFTER\)_[^=]*'); do
         unset "$hook"
     done
-    export _FOLDING_TYPE=quiet
+    # export _FOLDING_TYPE=quiet
     DOCKER_PULL=false ici_isolate debians build_debian "$pkg_path" "$repo" || ici_exit
 )
 

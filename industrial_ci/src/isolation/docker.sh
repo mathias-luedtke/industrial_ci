@@ -84,7 +84,6 @@ function ici_isolate() {
   fi
 
   ici_forward_mount TARGET_REPO_PATH ro
-  ici_forward_mount ICI_SRC_PATH ro
   ici_forward_mount BASEDIR rw
   ici_forward_mount CCACHE_DIR rw
   ici_forward_mount SSH_AUTH_SOCK rw # forward ssh agent into docker container
@@ -121,7 +120,7 @@ function ici_isolate() {
 function ici_run_cmd_in_docker() {
   local credentials=()
   ici_parse_env_array credentials DOCKER_CREDENTIALS
-  local to_copy=()
+  local to_copy=("$ICI_SRC_PATH")
   local cleanup=""
 
   for d in "${credentials[@]}"; do

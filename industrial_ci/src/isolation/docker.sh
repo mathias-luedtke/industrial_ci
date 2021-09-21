@@ -30,7 +30,7 @@ function ici_forward_mount() {
   fi
   if [ -n "$p" ]; then
     local p_abs
-    p_abs=$(readlink -m "$p")
+    p_abs="$p"
     local p_inner=${3:-$p_abs}
     _docker_run_opts+=(-v "$p_abs:$p_inner:$2")
     if [ -n "$v" ]; then
@@ -101,7 +101,7 @@ function ici_isolate() {
                         --entrypoint '' \
                         -w "$TARGET_REPO_PATH" \
                         "$DOCKER_IMAGE" \
-                        /bin/bash "$(readlink -m "$ICI_SRC_PATH")/run.sh" "$file" "$@"
+                        /bin/bash ""$ICI_SRC_PATH"/run.sh" "$file" "$@"
 }
 #######################################
 # wrapper for running a command in docker

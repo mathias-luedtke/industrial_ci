@@ -101,7 +101,7 @@ function ici_isolate() {
                         --entrypoint '' \
                         -w "$TARGET_REPO_PATH" \
                         "$DOCKER_IMAGE" \
-                        /bin/bash "$ICI_SRC_PATH"/run.sh" "$file" "$@"
+                        /bin/bash "$ICI_SRC_PATH/run.sh" "$file" "$@"
 }
 #######################################
 # wrapper for running a command in docker

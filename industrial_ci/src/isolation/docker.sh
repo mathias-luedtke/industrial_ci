@@ -99,9 +99,8 @@ function ici_isolate() {
                         -t \
                         --entrypoint '' \
                         -w "$TARGET_REPO_PATH" \
-                        -e ICI_SRC_PATH=/ici \
                         "$DOCKER_IMAGE" \
-                        /bin/bash "/ici/run.sh" "$file" "$@"
+                        /bin/bash "$ICI_SRC_PATH/run.sh" "$file" "$@"
 }
 #######################################
 # wrapper for running a command in docker
@@ -155,7 +154,7 @@ function ici_run_cmd_in_docker() {
     docker_cp "$d" "$cid:${docker_query[*]:2}/" "${docker_query[0]}" "${docker_query[1]}"
   done
 
-  docker cp "$ICI_SRC_PATH/" "$cid:/ici"
+  docker cp "$ICI_SRC_PATH" "$cid:$ICI_SRC_PATH/"
 
 
   trap '>/dev/null ici_label ici_quiet docker kill --signal=SIGTERM $cid && >/dev/null docker wait $cid' INT
@@ -177,8 +176,6 @@ function ici_run_cmd_in_docker() {
 # work-around for https://github.com/moby/moby/issues/34096
 # ensures that copied files are owned by the target user
 function docker_cp {
-  echo tar --numeric-owner --owner="${3:-root}" --group="${4:-root}" -c -f - -C "$(dirname "$1")" "$(basename "$1")"
-  echo docker cp - "$2"
   set -o pipefail
   tar --numeric-owner --owner="${3:-root}" --group="${4:-root}" -c -f - -C "$(dirname "$1")" "$(basename "$1")" | docker cp - "$2"
   set +o pipefail

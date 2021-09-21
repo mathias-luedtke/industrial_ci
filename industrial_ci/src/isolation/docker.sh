@@ -99,8 +99,9 @@ function ici_isolate() {
                         -t \
                         --entrypoint '' \
                         -w "$TARGET_REPO_PATH" \
+                        -e ICI_SRC_PATH=/ici \
                         "$DOCKER_IMAGE" \
-                        /bin/bash "$ICI_SRC_PATH/run.sh" "$file" "$@"
+                        /bin/bash "/ici/run.sh" "$file" "$@"
 }
 #######################################
 # wrapper for running a command in docker
@@ -154,7 +155,7 @@ function ici_run_cmd_in_docker() {
     docker_cp "$d" "$cid:${docker_query[*]:2}/" "${docker_query[0]}" "${docker_query[1]}"
   done
 
-  docker_cp "$ICI_SRC_PATH" "$cid:$ICI_SRC_PATH" "${docker_query[0]}" "${docker_query[1]}"
+  docker_cp "$ICI_SRC_PATH" "$cid:/ici" "${docker_query[0]}" "${docker_query[1]}"
 
 
   trap '>/dev/null ici_label ici_quiet docker kill --signal=SIGTERM $cid && >/dev/null docker wait $cid' INT

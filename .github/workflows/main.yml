@@ -15,4 +15,4 @@ jobs:
         id: ici
       - name: Check output
         run: |
-          echo "${{ fromJSON(steps.ici.outputs.test_dict).answer }}"
+          echo "${{ steps.ici.outputs.answer }}"

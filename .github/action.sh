@@ -42,4 +42,4 @@ if [ "${ABICHECK_MERGE:-}" = "auto" ]; then
   [ "$GITHUB_EVENT_NAME" != "pull_request" ] || ABICHECK_MERGE=true
 fi
 
-echo "::set-output name=test_list::\"[1,2,3,4,5]\""
+echo "::set-output name=test_dict::{\"answer\":42}"

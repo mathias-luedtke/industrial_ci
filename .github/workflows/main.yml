@@ -15,4 +15,4 @@ jobs:
         id: ici
       - name: Check output
         run: |
-          echo "${{ join(steps.ici.outputs.test_list, '-')}}"
+          echo "${{ steps.ici.outputs.test_list.answer }}"

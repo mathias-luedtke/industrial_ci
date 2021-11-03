@@ -67,9 +67,9 @@ outputs: # propagate outputs
   downstream_test_results:
     description: "Exit code of step downstream_test_results"
     value: ${{ steps.ici.outputs.downstream_test_results }}
-  test_list:
-    description: "Test list"
-    value: ${{ fromJSON(steps.ici.outputs.test_list) }}
+  test_dict:
+    description: "Test dict"
+    value: ${{ fromJSON(steps.ici.outputs.test_dict) }}
 
 runs:
   using: "composite"

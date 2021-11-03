@@ -69,7 +69,7 @@ outputs: # propagate outputs
     value: ${{ steps.ici.outputs.downstream_test_results }}
   test_dict:
     description: "Test dict"
-    value: ${{ fromJSON(steps.ici.outputs.test_dict) }}
+    value: ${{ steps.ici.outputs.test_dict }}
 
 runs:
   using: "composite"

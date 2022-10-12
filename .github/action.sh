@@ -21,6 +21,8 @@
 
 set -euo pipefail
 
+env
+
 DIR_THIS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 export TARGET_REPO_PATH=$GITHUB_WORKSPACE

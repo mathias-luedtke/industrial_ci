@@ -13,8 +13,8 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.
-
+# limitations uder the License.
+ "${GITHUB_ENV-}
 function  ici_start_fold() {
     shift 3
     echo -en "##[group]"
@@ -26,7 +26,8 @@ function  ici_end_fold() {
 }
 
 function ici_report_result() {
-    env
+    echo "$1=$2"
+    echo "GHO ${GITHUB_OUTPUT-} "${GITHUB_ENV-}"
     if [ -n "${GITHUB_OUTPUT-}" ]; then
         echo "$1=$2" | tee -a "$GITHUB_OUTPUT"
     fi

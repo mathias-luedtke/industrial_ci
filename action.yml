@@ -8,5 +8,3 @@ inputs:
 runs:
   using: 'node12'
   main: '.github/action.js'
-  env:
-    GITHUB_OUTPUT: $GITHUB_OUTPUT

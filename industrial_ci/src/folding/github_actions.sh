@@ -28,6 +28,6 @@ function  ici_end_fold() {
 function ici_report_result() {
     env
     if [ -n "${GITHUB_OUTPUT-}" ]; then
-        echo "$1=$2" >> "$GITHUB_OUTPUT"
+        echo "$1=$2" | tee -a "$GITHUB_OUTPUT"
     fi
 }

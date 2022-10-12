@@ -27,8 +27,9 @@ function  ici_end_fold() {
 
 function ici_report_result() {
     echo "$1=$2"
-    echo "GHO ${GITHUB_OUTPUT-} ${GITHUB_ENV-}"
     if [ -n "${GITHUB_OUTPUT-}" ]; then
         echo "$1=$2" | tee -a "$GITHUB_OUTPUT"
+    else
+        echo "no GHO"
     fi
 }

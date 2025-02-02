@@ -48,4 +48,22 @@ if [ "${ACT:-}" = true ]; then
   ici_warn "Detected act, bundling industrial_ci"
 fi
 
+if [ -n "${INPUT_SSH_KEY:-}" ]; then
+  # start SSH agent
+  # shellcheck disable=SC2046
+  eval $(ssh-agent -s)
+  # add key to agent
+  ssh-add <(echo "$INPUT_SSH_KEY") || { res=$?; echo "could not add ssh key"; exit $res; }
+fi
+
+if [ -n "${SSH_AUTH_SOCK:-}" ]; then
+  # setup known hosts
+  mkdir -p ~/.ssh
+  if [ -n "${INPUT_SSH_KNOWN_HOSTS:-}" ]; then
+    echo "$INPUT_SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+  else
+    cat /etc/ssh/ssh_known_hosts >> ~/.ssh/known_hosts
+  fi
+fi
+
 env "$@" bash "$ICI_SRC_PATH/ci_main.sh"

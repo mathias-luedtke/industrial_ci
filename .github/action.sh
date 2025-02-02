@@ -48,6 +48,9 @@ if [ "${ACT:-}" = true ]; then
   ici_warn "Detected act, bundling industrial_ci"
 fi
 
+INPUT_SSH_KEY=$(printenv INPUT_SSH-KEY) || true
+INPUT_SSH_KNOWN_HOSTS=$(printenv INPUT_SSH-KNOWN-HOSTS) || true
+
 if [ -n "${INPUT_SSH_KEY:-}" ]; then
   # start SSH agent
   # shellcheck disable=SC2046
